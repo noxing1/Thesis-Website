@@ -1,27 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Helvetica');
+
 body {
-    font-family: Comic Sans MS, sans-serif;
-    background-color: #f2ac0b;
-    text-align: center;
+  font-family: 'Comic Sans MS', sans-serif;
+  background-color: #f2ac0b;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  gap: 40px;
+}
+
+.left-image {
+  width: 50vw;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.left-image img {
+  position: absolute;
+  right: 0;
+  height: 100%;
+  width: auto;
+  object-fit: cover;
+}
+
+.content-box {
+  width: 45vw;
+  margin: auto 0;
+  text-align: left;
+  color: white;
+  font-family: Helvetica, sans-serif;
+  font-weight: bold;
+  padding-left: 60px;
+  box-sizing: border-box;
+}
+
+h1 {
+  margin-bottom: 8px;
+  font-size: 2rem;
+}
+
+.tagline {
+  font-size: 1rem;
+  font-weight: normal;
+  margin-top: 4px;
+  margin-bottom: 16px;
+  line-height: 1.3;
+  width: 280px;
+}
+
+h3 {
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.school-buttons {
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.or-text {
+  font-weight: normal;
+  font-size: 1rem;
+  color: white;
+  margin: 0 5px;
 }
 
 button {
-    background-color: #fcd34d;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 18px;
-    cursor: pointer;
+  background-color: #fcd34d;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  font-family: Helvetica, sans-serif;
+  font-weight: bold;
+  color: #3b3b3b;
+  width: 250px;
+  transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
-div {
-    background-color: azure;
-    width: 400px;
-    margin-top: 150px;
-    margin-left: auto;
-    margin-right: auto;
-    border-radius: 20px;
-    border-width: 8px;
-    border-color:#fcd34d;
-    border-style: solid;
-    padding: 20px;
+button:hover {
+  background-color: #ffd966;
+  transform: scale(1.05); /* sedikit lebih besar agar terasa interaktif */
+  z-index: 1; /* supaya tombol hover di atas tombol lain */
+}
+
+.brand {
+  color: gold;
+}
+
+.footer-text {
+  font-size: 0.9rem;
+  font-weight: normal;
+  opacity: 0.9;
+  margin-top: 24px;
+  line-height: 1.4;
 }

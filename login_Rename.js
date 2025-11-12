@@ -1,4 +1,6 @@
-function sayHello() {
-    alert("Hello, little coder! 👋");
+function pilihTK() {
+    alert("Kamu pilih TK");
   }
-  
+function pilihSD() {
+    alert("Kamu pilih SD");
+} 

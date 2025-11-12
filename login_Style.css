@@ -1,14 +1,27 @@
 body {
     font-family: Comic Sans MS, sans-serif;
-    background-color: #fef6e4;
+    background-color: #f2ac0b;
     text-align: center;
-  }
-  button {
+}
+
+button {
     background-color: #fcd34d;
     border: none;
     padding: 10px 20px;
     border-radius: 8px;
     font-size: 18px;
     cursor: pointer;
-  }
-  
+}
+
+div {
+    background-color: azure;
+    width: 400px;
+    margin-top: 150px;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 20px;
+    border-width: 8px;
+    border-color:#fcd34d;
+    border-style: solid;
+    padding: 20px;
+}

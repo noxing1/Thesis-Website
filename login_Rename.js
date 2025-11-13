@@ -1,3 +1,3 @@
 function pilihSD() {
-    alert("Kamu pilih SD PlaceHolder");
+    alert("You are quite Rapeable");
 } 

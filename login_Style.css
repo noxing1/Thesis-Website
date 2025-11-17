@@ -1,3 +1,6 @@
+/* ============================================================
+   GLOBAL STYLES
+============================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Helvetica');
 
 body {
@@ -9,18 +12,27 @@ body {
   height: 100vh;
   overflow: hidden;
   gap: 40px;
+  line-height: 1.4;
+
+  /* Transition diperhalus & diperlambat */
+  transition: background-color 0.9s ease, color 0.9s ease;
 }
 
+/* ============================================================
+   LEFT IMAGE
+============================================================ */
 .left-image {
   width: 50vw;
   height: 100vh;
   overflow: hidden;
   position: relative;
   flex-shrink: 0;
-  border-right: rgb(255, 239, 16);
-  border-right-width: 1px;
-  border-right-style: solid;
+  border-right: 0;
+
+  /* Bayangan horizontal mengarah ke kanan */
+  box-shadow: 25px 0 45px -15px rgba(0, 0, 0, 0.35);
 }
+
 
 .left-image img {
   position: absolute;
@@ -30,6 +42,9 @@ body {
   object-fit: cover;
 }
 
+/* ============================================================
+   CONTENT TEXT AREA
+============================================================ */
 .content-box {
   width: 45vw;
   margin: auto 0;
@@ -41,25 +56,14 @@ body {
   box-sizing: border-box;
 }
 
-h1 {
-  margin-bottom: 8px;
-  font-size: 2rem;
-}
+/* Heading, tagline dan teks lainnya */
+h1 { margin-bottom: 8px; font-size: 2rem; line-height: 1.25; }
+.tagline { font-size: 1rem; margin-top: 4px; margin-bottom: 16px; line-height: 1.45; width: 280px; }
+h3 { margin-top: 8px; margin-bottom: 10px; line-height: 1.3;}
 
-.tagline {
-  font-size: 1rem;
-  font-weight: normal;
-  margin-top: 4px;
-  margin-bottom: 16px;
-  line-height: 1.3;
-  width: 280px;
-}
-
-h3 {
-  margin-top: 8px;
-  margin-bottom: 10px;
-}
-
+/* ============================================================
+   SCHOOL SELECTION BUTTONS
+============================================================ */
 .school-buttons {
   margin: 10px 0;
   display: flex;
@@ -68,42 +72,108 @@ h3 {
 }
 
 .or-text {
-  font-weight: normal;
   font-size: 1rem;
   color: white;
-  margin: 0 5px;
 }
 
+/* Button styles */
 button {
   background-color: #fcd34d;
   border: none;
   padding: 10px 25px;
   border-radius: 8px;
-  box-shadow: 5px 5px 5px 2px rgba(0, 0, 0, 0.4);
-  font-size: 16px;
-  cursor: pointer;
-  font-family: Helvetica, sans-serif;
-  font-weight: bold;
-  color: #3b3b3b;
   width: 250px;
+  font-size: 16px;
+  font-weight: bold;
+  font-family: Helvetica, sans-serif;
+  cursor: pointer;
+
+  box-shadow: 5px 5px 5px 2px rgba(0,0,0,0.4);
   transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
+/* Hover effect */
 button:hover {
   background-color: #ffd966;
-  transform: scale(1.05); /* sedikit lebih besar agar terasa interaktif */
-  z-index: 1; /* supaya tombol hover di atas tombol lain */
+  transform: scale(1.05);
 }
 
+/* Brand text */
 .brand {
   color: gold;
-  text-shadow: 1px 1px 0 black;;
+  text-shadow: 1px 1px 0 black;
 }
 
-.footer-text {
-  font-size: 0.9rem;
-  font-weight: normal;
-  opacity: 0.9;
-  margin-top: 24px;
-  line-height: 1.4;
+/* ============================================================
+   THEMES (TK & SD)
+============================================================ */
+
+/* Tema TK — cerah & ceria */
+body.theme-tk {
+  background-color: #f9d548;
+  color: #4b3300;
+  text-shadow: 0px 0px 3px #ffffff80, 1px 1px 1px #00000050;
+}
+
+body.theme-tk .brand {
+  color: #b77900;
+  text-shadow: none;
+}
+
+body.theme-tk button {
+  background-color: #ffe27c;
+  color: #4a3b00;
+}
+
+body.theme-tk button:hover {
+  background-color: #ffef9f;
+}
+
+/* Tema SD — gelap & serius */
+body.theme-sd {
+  background-color: #212536;
+  color: white;
+}
+
+body.theme-sd .brand {
+  color: gold;
+  text-shadow: 1px 1px 0 black;
+}
+
+/* ============================================================
+   LANGUAGE TOGGLE BUTTON
+============================================================ */
+.lang-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+
+  width: 60px;
+  height: 35px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+
+  font-size: 14px;
+  font-weight: bold;
+
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+
+  transition: 0.25s;
+}
+
+/* Warna tombol mengikuti tema */
+body.theme-tk .lang-btn {
+  background: gold;
+  color: black;
+}
+
+body.theme-sd .lang-btn {
+  background: white;
+  color: black;
+}
+
+/* Hover */
+.lang-btn:hover {
+  transform: scale(1.07);
 }

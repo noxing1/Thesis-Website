@@ -1,0 +1,228 @@
+body {
+  background: #212536;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  color: white;
+}
+
+/* Workspace */
+.workspace {
+  width: 350px;
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.slot {
+  width: 70%;
+  height: 40px;
+  background: black;
+  margin: 10px auto;
+  border-radius: 8px;
+  box-shadow: inset 0 0 8px rgba(255,255,255,0.15);
+  transition: 0.2s;
+}
+
+.slot.highlight {
+  background: #d4a733;
+  box-shadow: inset 0 0 10px #ffdd77;
+}
+
+/* Codeblocks Row */
+.codeblocks-bar {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  background: #1b2033;
+  padding: 15px;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  height: 90px;
+}
+
+
+.block {
+  padding: 10px 15px;
+  border-radius: 6px;
+  cursor: grab;
+  position: relative;
+}
+
+/* Warna codeblocks */
+.block-jalan { background: #3257ff; }
+.block-repeat { background: #8b0000; }
+.block-if { background: #009688; }
+.block-func { background: #6a0dad; }
+
+/* Function inner slots */
+.func-inner {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.func-slot {
+  width: 40px;
+  height: 40px;
+}
+
+/* Dropdown jalan */
+.dropdown {
+  display: none;
+  position: absolute;
+  bottom: 45px;
+  background: #4d78ff;
+  border-radius: 6px;
+  padding: 5px;
+}
+
+.drop-item {
+  padding: 5px;
+  cursor: pointer;
+}
+.drop-item:hover {
+  background: #698cff;
+}
+
+#btn-run {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  background: #2ecc71;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 999;
+}
+
+#btn-run:hover {
+  background: #27ae60;
+}
+
+#btn-back {
+  position: fixed;
+  bottom: 15px;
+  left: 15px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 999;
+}
+
+#btn-back:hover {
+  background: #c0392b;
+}
+
+/* Tombol setting arah */
+.dir-btn {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid white;
+  padding: 3px 6px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+/* Dropdown arah */
+.dir-dropdown {
+  position: absolute;
+  background: #4d78ff;
+  border-radius: 6px;
+  padding: 5px;
+  display: none;
+  margin-top: 5px;
+  z-index: 20;
+}
+
+.dir-item {
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.dir-item:hover {
+  background: #698cff;
+}
+
+#repeat-editor {
+  background: #1b2033;
+  border: 2px solid #ff4444;
+  padding: 15px;
+  border-radius: 10px;
+
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  z-index: 1;
+}
+
+.hidden {
+  display: none;
+}
+
+
+.repeat-window {
+  background: #1b1b2d;
+  width: 100%;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.6);
+  box-sizing: border-box;
+}
+
+.repeat-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  font-size: 18px;
+}
+
+.repeat-close {
+  background: #d9534f;
+  border: none;
+  color: white;
+  padding: 4px 10px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.repeat-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.repeat-inner-slot {
+  width: 100%;
+  height: 50px;
+  background: black;
+  border-radius: 6px;
+  box-shadow: inset 0 0 8px rgba(255,255,255,0.2);
+}
+
+.repeat-label {
+  margin-bottom: 5px;
+  display: block;
+}
+
+.repeat-save {
+  margin-top: 15px;
+  background: #2ecc71;
+  padding: 10px;
+  border: none;
+  width: 100%;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+}

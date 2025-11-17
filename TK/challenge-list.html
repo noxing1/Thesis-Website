@@ -29,7 +29,9 @@
       </div>
 
       <div class="best-challenge">
-        <button id="btn-best" onclick="mulaiTantangan()">Mulai Tantangan Terbaik</button>
+        <button id="btn-best" onclick="window.location.href='challenge-placeholder/challenge-placeholder.html'">
+          Mulai Tantangan Terbaik
+        </button>
       </div>
     </div>
   </section>
@@ -39,33 +41,33 @@
     <h2>Tantangan</h2>
 
     <div class="filter-box">
-      <h4>Filter Kesulitan</h4>
-      <label><input type="radio" name="difficulty" value="all" checked> Semua</label>
-      <label><input type="radio" name="difficulty" value="mudah"> Mudah</label>
-      <label><input type="radio" name="difficulty" value="sedang"> Sedang</label>
-      <label><input type="radio" name="difficulty" value="sulit"> Sulit</label>
+      <h4 id = "filter-text">Filter Kesulitan</h4>
+      <label><input type="radio" name="difficulty" value="all" checked> Semua</label> <br>
+      <label><input type="radio" name="difficulty" value="mudah"> Mudah</label> <br>
+      <label><input type="radio" name="difficulty" value="sedang"> Sedang</label> <br>
+      <label><input type="radio" name="difficulty" value="sulit"> Sulit</label> <br> 
     </div>
 
     <div class="challenge-list">
       <!-- contoh tantangan -->
       <div class="challenge-box mudah">
+        <h3>Gerakkan Karakter</h3>
+        <p class="tags">[mudah] [movement]</p>
+      </div>
+
+      <div class="challenge-box mudah">
         <h3>Cetak Nama</h3>
-        <p class="tags">#mudah #printing</p>
+        <p class="tags">[mudah] [printing]</p>
       </div>
 
       <div class="challenge-box sedang">
         <h3>Loop Warna-warni</h3>
-        <p class="tags">#sedang #loop</p>
+        <p class="tags">[sedang] [loop]</p>
       </div>
 
       <div class="challenge-box sulit">
         <h3>Menebak Angka</h3>
-        <p class="tags">#sulit #ifelse</p>
-      </div>
-
-      <div class="challenge-box mudah">
-        <h3>Gerakkan Karakter</h3>
-        <p class="tags">#mudah #movement</p>
+        <p class="tags">[sulit] [if/else]</p>
       </div>
     </div>
   </section>

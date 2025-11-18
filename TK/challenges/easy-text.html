@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor Codeblocks</title>
+  <link rel="stylesheet" href="challenge-placeholder.css">
+</head>
+
+<body>
+
+<button id="btn-run">▶ RUN</button>
+
+<div class="work-area">
+
+  <!-- WORKSPACE VERTIKAL -->
+  <div class="workspace">
+    <h3>Workspace</h3>
+    <div id="slots">
+      <!-- 10 SLOT KOSONG -->
+      <div class="slot"></div>
+      <div class="slot"></div>
+      <div class="slot"></div>
+      <div class="slot"></div>
+      <div class="slot"></div>
+      <div class="slot"></div>
+      <div class="slot"></div>
+      <div class="slot"></div>
+      <div class="slot"></div>
+      <div class="slot"></div>
+    </div>
+  </div>
+
+  <!-- CODEBLOCKS BAWAH -->
+  <div class="codeblocks-bar">
+
+    <!-- JALAN -->
+    <div class="block block-jalan" data-type="jalan">
+      🡱 Jalan
+    </div>
+
+    <!-- REPEAT -->
+    <div class="block block-repeat" data-type="repeat">
+      🔁 Repeat
+    </div>
+
+    <!-- IF/ELSE -->
+    <div class="block block-if" data-type="if">
+      ❓ If / Else
+    </div>
+
+    <!-- FUNCTION -->
+    <div class="block block-func" data-type="function">
+      🔧 Function
+      <div class="func-inner">
+        <div class="slot func-slot"></div>
+        <div class="slot func-slot"></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<button id="btn-back" onclick="window.location.href='../challenge-list.html'">⮌ Kembali</button>
+
+<!-- POPUP REPEAT EDITOR -->
+<div id="repeat-editor" class="repeat-editor hidden">
+  <div class="repeat-window">
+
+    <div class="repeat-header">
+      <span>Edit Repeat</span>
+      <button id="repeat-close" class="repeat-close">✖</button>
+    </div>
+
+    <div class="repeat-slots">
+      <div class="slot repeat-inner-slot"></div>
+      <div class="slot repeat-inner-slot"></div>
+    </div>
+
+    <label class="repeat-label">Jumlah Pengulangan:</label>
+    <input type="number" id="repeat-count" min="1" value="1">
+
+    <button id="save-repeat" class="repeat-save">Simpan</button>
+
+  </div>
+</div>
+
+
+<script src="challenge-placeholder.js"></script>
+
+</body>
+</html>

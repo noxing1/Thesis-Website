@@ -1,0 +1,278 @@
+/* ============================================================
+   BASE STYLE (THEME TK)
+============================================================ */
+html {
+  overflow-y: scroll;
+}
+
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  padding-right: 12px;
+  box-sizing: border-box;
+  background-color: #f8d24b;
+  font-family: 'Helvetica', sans-serif;
+  color: #4b3300;
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+
+/* ============================================================
+   NAVBAR
+============================================================ */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 68px;
+  background: #ffeb8a;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 12px 20px;
+  box-sizing: border-box;
+
+  z-index: 5;
+}
+
+.nav-spacer {
+  height: 88px;
+}
+
+.nav-logo {
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #4a3b00;
+  user-select: none;
+}
+
+.nav-clock {
+  font-family: 'Digital Numbers', sans-serif;
+  font-size: 46px;
+  color: #4a3b00;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  min-width: 200px;
+}
+
+.nav-clock span {
+  padding: 0 4px;
+  transition: transform 0.35s ease, opacity 0.35s ease;
+}
+
+.time-animate {
+  opacity: 0;
+  transform: translateX(12px);
+}
+
+.lang-btn {
+  width: 60px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  background: black;
+  color: white;
+  transition: 0.25s ease;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
+}
+
+.lang-btn:hover {
+  transform: scale(1.07);
+}
+
+
+/* ============================================================
+   PROGRESS BOX
+============================================================ */
+.progress-box {
+  background-color: #fff4bf;
+  border-radius: 0 0 500px 500px; /* lengkung di bagian bawah: setengah-oval */
+  padding: 28px 20px 36px 20px;
+  margin: 13.5px auto 18px;           /* beri sedikit margin top yang kecil */
+  width: 1500px;;
+  color: #4a3b00;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+  position: relative;
+  /* geser ke atas sedikit supaya bagian atas 'menyentuh' navbar secara visual */
+  transform: translateY(-34px);
+  box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+  .challenges {
+    grid-template-columns: 1fr;
+  }
+  #challenge-title {
+    grid-column: 1 / -1;
+  }
+  .filter-box {
+    grid-column: 1 / -1;
+  }
+  .challenge-list {
+    grid-column: 1 / -1;
+  }
+
+  /* kurangi offset progress box vertical agar tidak 'tumpang tindih' pada layar sempit */
+  .progress-box { transform: translateY(-18px); padding-top: 20px; border-radius: 0 0 120px 120px; }
+}
+
+.progress-box .progress-header,
+.progress-box .progress-content {
+  max-width: 1000px;        /* ubah nilai ini sesuai selera */
+  margin: 0 auto;          /* supaya tetap di tengah */
+  width: 100%;
+  text-align: left;
+}
+
+.progress-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;         /* jadi tetap responsif */
+}
+
+.user-info {
+  width: 60%;
+  max-width: 100%;
+}
+
+.best-challenge {
+  width: auto;
+  text-align: center;
+}
+
+.progress-header h2 {
+  margin-top: 0;
+}
+
+.exp-bar {
+  background-color: #ffe999;
+  border-radius: 10px;
+  height: 15px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  width: 1000px;
+}
+
+.exp-fill {
+  background-color: #f7c300;
+  height: 100%;
+  width: 0%;
+  border-radius: 10px;
+  transition: width 0.3s ease-in-out;
+}
+
+.best-challenge button {
+  background-color: #ffd342;
+  color: #4a3b00;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: transform 0.1s ease;
+}
+
+.best-challenge button:hover {
+  transform: scale(1.05);
+}
+
+
+/* ============================================================
+   CHALLENGE LIST
+============================================================ */
+.challenges {
+  width: 90%;
+  margin: auto;
+  display: grid;
+  grid-template-columns: 180px 1fr; /* kolom kiri = filter, kanan = daftar */
+  gap: 20px;
+  align-items: start;
+  column-gap: 30px;
+  margin: -20px auto 0 auto;
+}
+
+#challenge-title {
+  grid-column: 1 / -1; /* heading mengambil seluruh 2 kolom */
+  margin: 0 0 18px 0;
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.filter-box {
+  grid-column: 1 / 2;
+  background-color: #ffecab;
+  border-radius: 10px;
+  padding: 15px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+}
+
+#filter-text {
+  margin: 0 0 10px 0;
+  font-weight: bold;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.challenge-list {
+  grid-column: 2 / 3;
+  display: block;
+}
+
+.challenge-box {
+  background-color: #ffeab2;
+  border-radius: 10px;
+  padding: 16px;
+  margin: 10px 0;
+  box-shadow: 0 0 8px rgba(0,0,0,0.2);
+  line-height: 1.5; /* buat teks tidak berdempet */
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.challenge-box:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 12px rgba(0,0,0,0.3);
+}
+
+.challenge-box h3 {
+  margin: 0 0 6px 0;
+  line-height: 1.25;
+}
+
+.tags {
+  color: #c07000;
+  font-size: 0.95rem;
+  margin: 4px 0 0;
+  line-height: 1.4;
+}
+
+.progress-box, .filter-box, .challenge-list, .challenge-box, .content-box {
+  line-height: 1.45;
+}
+
+.challenge-subtitle {
+  grid-column: 1 / -1;
+  margin: -30px 0 0 5px;
+  font-size: 1.05rem;
+  color: #6b4e00;
+  opacity: 0.9;
+  line-height: 1.4;
+}

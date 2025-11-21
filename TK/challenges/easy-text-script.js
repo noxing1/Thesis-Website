@@ -780,3 +780,7 @@ function getTileAt(layerName, px, py) {
   const index = tileY * mapData.width + tileX;
   return layer.data[index];
 }
+
+document.getElementById("btn-back").onclick = () => {
+    window.location.href = "../challenge-list.html";
+};

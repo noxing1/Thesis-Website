@@ -1,0 +1,229 @@
+/* =========================================
+   GLOBAL
+========================================= */
+:root {
+  --tk-bg: #f8d24b;          /* Background kuning */
+  --tk-panel: #ffeb8a;       /* Panel lembut */
+  --tk-panel-dark: #ffeab2;  /* Panel item */
+  --tk-brown: #4b3300;       /* Teks coklat */
+  --tk-border: rgba(0,0,0,0.25);
+  --tk-shadow: rgba(0,0,0,0.22);
+  --tk-slot: rgba(255,255,255,0.45);
+}
+
+body {
+  margin: 0;
+  font-family: Arial;
+  background: var(--tk-bg);
+  color: var(--tk-brown);
+  box-sizing: border-box;
+  background-color: var(--tk-bg);
+}
+
+* {
+  box-sizing: inherit;
+}
+
+/* =========================================
+   HEADER
+========================================= */
+.header-bar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 60px;
+  background: var(--tk-blue-dark);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
+  z-index: 1000;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+}
+
+.header-bar button {
+  width: 80px;
+  height: 60px;
+  border-radius: 10px;
+  background: var(--tk-blue);
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* =========================================
+   CANVAS
+========================================= */
+#game {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60vw;                 /* ← lebih kecil */
+  height: calc(60vw * 0.5);    /* rasio 2:1 mirip map kecil */
+  max-height: calc(100vh - 250px);
+  image-rendering: pixelated;
+  border: 2px solid #fff2;     /* opsional, estetika */
+  border-radius: 10px;
+}
+
+
+/* =========================================
+   BOTTOM PANEL
+========================================= */
+.bottom-panel {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  height: 190px;
+  background: var(--tk-panel);
+  backdrop-filter: none;
+  display: flex;
+  padding: 15px;
+  gap: 10px;
+  z-index: 999;
+  border-top: 2px solid var(--tk-border);
+  box-shadow: 0 -4px 10px var(--tk-shadow);
+}
+
+/* =========================================
+   TOOLBAR AREA 50%
+========================================= */
+.toolbar-area {
+  flex: 1;
+  display: flex;
+  flex-direction: row;     /* ← kembali jadi vertikal */
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
+  margin-top: -10px;          /* naikkan sedikit agar rapi */
+}
+
+.toolbar-area h3 {
+  margin: 0;
+  margin-bottom: 5px;
+  color: var(--tk-brown);
+  flex-basis: 100%;
+  text-align: left;
+}
+
+/* Kotak tombol utama */
+.toolbar-btn {
+  width: 70px;
+  height: 70px;
+  border-radius: 10px;
+  background: var(--tk-panel-dark);
+  color: var(--tk-brown);
+  box-shadow: 0 3px 6px var(--tk-shadow);
+  border: 1px solid var(--tk-border);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  font-weight: bold;
+  cursor: pointer;
+  position: relative;
+}
+
+/* =========================================
+   DROPUP
+========================================= */
+.dropup {
+  position: absolute;
+  bottom: 80px;
+  left: 0;
+  background: var(--tk-panel-dark);
+  border-radius: 10px;
+  padding: 10px;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--tk-border);
+  z-index: 9999;
+  color: var(--tk-brown);
+}
+
+.drop-item {
+  background: #ffecab;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: grab;
+  font-size: 14px;
+  color: var(--tk-brown);
+}
+
+.drop-item:hover {
+  background: #ffe58c;
+}
+
+/* =========================================
+   WORKSPACE 50%
+========================================= */
+.workspace-area {
+  flex: 1;
+  overflow-x: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.workspace-scroll {
+  display: flex;
+  gap: 12px;
+}
+
+.workspace-area h3 {
+  color: var(--tk-brown);
+  margin-top: -5px;
+  margin-bottom: 10px;
+}
+
+/* Slot kotak */
+.slot {
+  width: 70px;
+  height: 70px;
+  background: var(--tk-slot);
+  border: 2px dashed var(--tk-brown);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.slot.highlight {
+  background: #ffe999;
+  border-color: #d7a800;
+  box-shadow: inset 0 0 10px #ffd342;
+}
+
+/* =========================================
+   BLOCK (KOTAK)
+========================================= */
+.block {
+  width: 70px;
+  height: 70px;
+  border-radius: 10px;
+
+  background: #ffd342;
+  color: #4b3300;
+  border: 2px solid #c99b00;
+  box-shadow: 0 3px 6px var(--tk-shadow);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+  padding: 4px;
+  line-height: normal;     /* ← FIX BESAR */
+  font-size: 16px;         /* ↓ agar tidak overflow */
+
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+
+.drag-shadow {
+  transform: scale(1.12);
+}

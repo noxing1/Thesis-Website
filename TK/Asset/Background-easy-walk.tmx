@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="12" height="6" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="1">
+ <editorsettings>
+  <export target="JSON/Background-easy-walk.json" format="json"/>
+ </editorsettings>
+ <tileset firstgid="1" source="Background.tsx"/>
+ <tileset firstgid="33" source="Decoration.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="12" height="6">
+  <data encoding="csv">
+13,13,13,13,13,13,13,13,13,13,13,13,
+13,13,13,13,13,13,13,13,13,13,13,13,
+13,13,13,13,13,13,13,13,13,13,13,13,
+13,13,13,13,13,13,13,13,13,13,13,13,
+13,13,13,13,13,13,13,13,13,13,13,13,
+13,13,13,13,13,13,13,13,13,13,13,13
+</data>
+ </layer>
+ <layer id="3" name="Collider" width="12" height="6">
+  <data encoding="csv">
+14,2147483712,54,54,54,54,54,54,45,45,45,45,
+14,0,0,0,0,0,0,0,45,45,45,45,
+14,0,0,0,0,0,0,0,45,45,45,45,
+14,0,0,0,0,0,0,0,45,45,45,45,
+14,0,0,0,0,0,0,0,45,45,45,45,
+14,2147483712,54,54,54,54,54,54,45,45,45,45
+</data>
+ </layer>
+</map>

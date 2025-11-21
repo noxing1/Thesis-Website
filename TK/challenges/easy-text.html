@@ -1,93 +1,67 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Editor Codeblocks</title>
-  <link rel="stylesheet" href="challenge-placeholder.css">
-</head>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Codeblocks</title>
+    <link rel="stylesheet" href="easy-text-style.css">
+  </head>
 
-<body>
+  <body>
 
-<button id="btn-run">▶ RUN</button>
-
-<div class="work-area">
-
-  <!-- WORKSPACE VERTIKAL -->
-  <div class="workspace">
-    <h3>Workspace</h3>
-    <div id="slots">
-      <!-- 10 SLOT KOSONG -->
-      <div class="slot"></div>
-      <div class="slot"></div>
-      <div class="slot"></div>
-      <div class="slot"></div>
-      <div class="slot"></div>
-      <div class="slot"></div>
-      <div class="slot"></div>
-      <div class="slot"></div>
-      <div class="slot"></div>
-      <div class="slot"></div>
-    </div>
+  <div class="header-bar">
+    <button id="btn-back">⮌ Kembali</button>
+    <div class="title">GAMEPLAY</div>
+    <button id="btn-run">▶ RUN</button>
   </div>
 
-  <!-- CODEBLOCKS BAWAH -->
-  <div class="codeblocks-bar">
+  <canvas id="game"></canvas>
 
-    <!-- JALAN -->
-    <div class="block block-jalan" data-type="jalan">
-      🡱 Jalan
+  <div class="bottom-panel">
+
+    <!-- TOOLBAR kiri -->
+    <div class="toolbar-area">
+      <h3>Blocks</h3>
+
+      <div class="toolbar-btn" id="btn-bicara">
+        🗣️ Bicara
+        <div class="dropup" id="dropup-bicara">
+          <div class="drop-item" data-type="bicara" data-text="Halo">Halo 👋</div>
+          <div class="drop-item" data-type="bicara" data-text="Bye">Bye 👋</div>
+          <div class="drop-item" data-type="bicara" data-text="Hehehe">Hehehe 😆</div>
+        </div>
+      </div>
+
+      <div class="toolbar-btn" id="btn-jalan">
+        🡱 Jalan
+        <div class="dropup" id="dropup-jalan">
+          <div class="drop-item" data-type="jalan" data-dir="up">🡱 Atas</div>
+          <div class="drop-item" data-type="jalan" data-dir="right">🡲 Kanan</div>
+          <div class="drop-item" data-type="jalan" data-dir="left">🡸 Kiri</div>
+          <div class="drop-item" data-type="jalan" data-dir="down">🡳 Bawah</div>
+        </div>
+      </div>
     </div>
 
-    <!-- REPEAT -->
-    <div class="block block-repeat" data-type="repeat">
-      🔁 Repeat
-    </div>
-
-    <!-- IF/ELSE -->
-    <div class="block block-if" data-type="if">
-      ❓ If / Else
-    </div>
-
-    <!-- FUNCTION -->
-    <div class="block block-func" data-type="function">
-      🔧 Function
-      <div class="func-inner">
-        <div class="slot func-slot"></div>
-        <div class="slot func-slot"></div>
+    <!-- WORKSPACE kanan -->
+    <div class="workspace-area">
+      <h3>Workspace</h3>
+      <div id="slots" class="workspace-scroll">
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
       </div>
     </div>
 
   </div>
 
-</div>
-
-<button id="btn-back" onclick="window.location.href='../challenge-list.html'">⮌ Kembali</button>
-
-<!-- POPUP REPEAT EDITOR -->
-<div id="repeat-editor" class="repeat-editor hidden">
-  <div class="repeat-window">
-
-    <div class="repeat-header">
-      <span>Edit Repeat</span>
-      <button id="repeat-close" class="repeat-close">✖</button>
-    </div>
-
-    <div class="repeat-slots">
-      <div class="slot repeat-inner-slot"></div>
-      <div class="slot repeat-inner-slot"></div>
-    </div>
-
-    <label class="repeat-label">Jumlah Pengulangan:</label>
-    <input type="number" id="repeat-count" min="1" value="1">
-
-    <button id="save-repeat" class="repeat-save">Simpan</button>
-
-  </div>
-</div>
-
-
-<script src="challenge-placeholder.js"></script>
-
-</body>
+  <script src="easy-text-script.js"></script>
+  </body>
 </html>

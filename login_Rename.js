@@ -44,7 +44,7 @@ btnTK.addEventListener("click", () => {
 
 // SD → sementara hanya alert
 btnSD.addEventListener("click", () => {
-    alert("RAPE RAPE RAPE.");
+    alert("Placeholder");
 });
 
 
@@ -82,7 +82,7 @@ function applyLanguage(lang) {
     if (lang === "id") {
 
         document.querySelector("h1").innerHTML =
-            `Selamat Datang di <span class="brand">HateNiggers.com</span>!`;
+            `Selamat Datang di <span class="brand">Placeholder.com</span>!`;
 
         document.querySelector(".tagline").textContent =
             "Mulai perjalanan kodingmu dengan cara yang seru dan mudah.";
@@ -91,7 +91,7 @@ function applyLanguage(lang) {
         document.querySelector(".or-text").textContent = "atau";
 
         document.querySelector(".footer-text").innerHTML =
-            `Baru di <span class="brand">HateNiggers.com</span>? Pelajari dasar-dasar koding sambil bermain!`;
+            `Baru di <span class="brand">Placeholder.com</span>? Pelajari dasar-dasar koding sambil bermain!`;
 
         document.querySelector("#btn-tk").textContent = "Taman Kanak-Kanak";
         document.querySelector("#btn-sd").textContent = "Sekolah Dasar";
@@ -99,7 +99,7 @@ function applyLanguage(lang) {
     } else {
 
         document.querySelector("h1").innerHTML =
-            `Welcome to <span class="brand">HateNiggers.com</span>!`;
+            `Welcome to <span class="brand">Placeholder.com</span>!`;
 
         document.querySelector(".tagline").textContent =
             "Start your coding adventure with fun and easy challenges.";
@@ -108,7 +108,7 @@ function applyLanguage(lang) {
         document.querySelector(".or-text").textContent = "or";
 
         document.querySelector(".footer-text").innerHTML =
-            `New to <span class="brand">HateNiggers.com</span>? Learn basic coding while playing!`;
+            `New to <span class="brand">Placeholder.com</span>? Learn basic coding while playing!`;
 
         document.querySelector("#btn-tk").textContent = "Kindergarten";
         document.querySelector("#btn-sd").textContent = "Elementary School";

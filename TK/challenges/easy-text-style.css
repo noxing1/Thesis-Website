@@ -45,11 +45,12 @@ body {
   width: 80px;
   height: 60px;
   border-radius: 10px;
-  background: var(--tk-blue);
-  border: none;
-  color: white;
+  background: yellow;
+  border: 2px solid var(--tk-brown);
+  color: var(--tk-brown);
   font-size: 18px;
   cursor: pointer;
+  box-shadow: 0 3px 5px rgba(0,0,0,0.25);
 }
 
 /* =========================================
@@ -90,23 +91,41 @@ body {
 /* =========================================
    TOOLBAR AREA 50%
 ========================================= */
+.toolbar-buttons {
+  display: flex;
+  flex-direction: column;   /* ← VERTIKAL */
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.toolbar-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  justify-content: center;    /* ← new */
+  align-items: center;        /* ← new */
+  width: 100%;                /* agar benar-benar center */
+}
+
 .toolbar-area {
   flex: 1;
+  min-width: 50%;     /* ← memastikan 50% */
   display: flex;
-  flex-direction: row;     /* ← kembali jadi vertikal */
+  flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  gap: 12px;
-  margin-top: -10px;          /* naikkan sedikit agar rapi */
 }
 
 .toolbar-area h3 {
-  margin: 0;
-  margin-bottom: 5px;
+  margin: 17px 0 0 0;  /* turun sedikit */
   color: var(--tk-brown);
-  flex-basis: 100%;
-  text-align: left;
+  width: 100%;
+  text-align: left;    /* kembali ke kiri */
+  padding-left: 5px;
 }
+
 
 /* Kotak tombol utama */
 .toolbar-btn {
@@ -164,16 +183,21 @@ body {
 ========================================= */
 .workspace-area {
   flex: 1;
-  overflow-x: auto;
+  min-width: 50%;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  overflow-x: auto;     /* ← WAJIB: aktifkan scroll horizontal */
+  overflow-y: hidden;   /* opsional: agar tidak ada scroll vertikal */
 }
 
 .workspace-scroll {
   display: flex;
   gap: 12px;
+  min-width: max-content;   /* ← WAJIB: agar konten bisa melebar */
+  padding-bottom: 10px;     /* agar shadow block tidak kepotong */
 }
+
 
 .workspace-area h3 {
   color: var(--tk-brown);
@@ -183,12 +207,15 @@ body {
 
 /* Slot kotak */
 .slot {
-  width: 70px;
-  height: 70px;
+  width: 80px;
+  height: 80px;
   background: var(--tk-slot);
   border: 2px dashed var(--tk-brown);
   border-radius: 10px;
   flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .slot.highlight {
@@ -201,29 +228,95 @@ body {
    BLOCK (KOTAK)
 ========================================= */
 .block {
-  width: 70px;
-  height: 70px;
+  background: var(--tk-panel-dark);     /* warna kotaknya */
+  border: 2px solid var(--tk-brown);
   border-radius: 10px;
+  box-shadow: 0 3px 5px var(--tk-shadow);
+  color: var(--tk-brown);
 
-  background: #ffd342;
-  color: #4b3300;
-  border: 2px solid #c99b00;
-  box-shadow: 0 3px 6px var(--tk-shadow);
-
+  width: 78px;
+  height: 78px;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-
   text-align: center;
   padding: 4px;
-  line-height: normal;     /* ← FIX BESAR */
-  font-size: 16px;         /* ↓ agar tidak overflow */
+  font-size: 16px;
+}
 
-  cursor: grab;
-  flex-shrink: 0;
+.drag-shadow {
+  background: var(--tk-panel-dark);     /* tetap berwarna */
+  border: 2px solid var(--tk-brown);
 }
 
 
-.drag-shadow {
-  transform: scale(1.12);
+.win-box {
+  position: absolute;
+  top: 30%;
+  left: 40%;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.btn-reset-manual {
+  position: fixed;
+  top: 70px;                   /* sedikit di bawah navbar */
+  right: 20px;                 /* pojok kanan canvas */
+  background: #ffeab2;
+  border: 2px solid var(--tk-brown);
+  color: var(--tk-brown);
+  font-size: 20px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 3px 5px rgba(0,0,0,0.25);
+  z-index: 1200;
+}
+
+.btn-reset-manual:hover {
+  background: #ffdfa0;
+}
+
+.win-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: none;                  /* default hidden */
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.win-popup {
+  background: #ffeb8a;
+  border: 4px solid var(--tk-brown);
+  padding: 40px 60px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+.win-title {
+  font-size: 48px;
+  font-weight: bold;
+  color: var(--tk-brown);
+  margin-bottom: 25px;
+  text-shadow: 2px 2px #fff4;
+}
+
+.btn-kembali {
+  background: yellow;
+  border: 3px solid var(--tk-brown);
+  color: var(--tk-brown);
+  font-size: 22px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 3px 5px rgba(0,0,0,0.3);
+}
+.btn-kembali:hover {
+  background: #ffee4e;
 }

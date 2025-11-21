@@ -11,37 +11,43 @@
 
   <div class="header-bar">
     <button id="btn-back">⮌ Kembali</button>
-    <div class="title">GAMEPLAY</div>
+    <div class="title">PERGI KE BUNGA!</div>
     <button id="btn-run">▶ RUN</button>
   </div>
 
   <canvas id="game"></canvas>
+
+  <button id="btn-reset-manual" class="btn-reset-manual">↺ Reset</button>
 
   <div class="bottom-panel">
 
     <!-- TOOLBAR kiri -->
     <div class="toolbar-area">
       <h3>Blocks</h3>
+        <div class="toolbar-buttons">
 
-      <div class="toolbar-btn" id="btn-bicara">
-        🗣️ Bicara
-        <div class="dropup" id="dropup-bicara">
-          <div class="drop-item" data-type="bicara" data-text="Halo">Halo 👋</div>
-          <div class="drop-item" data-type="bicara" data-text="Bye">Bye 👋</div>
-          <div class="drop-item" data-type="bicara" data-text="Hehehe">Hehehe 😆</div>
-        </div>
-      </div>
+          <div class="toolbar-btn" id="btn-bicara">
+            🗣️ Bicara
+            <div class="dropup" id="dropup-bicara">
+              <div class="drop-item" data-type="bicara" data-text="Halo">Halo 👋</div>
+              <div class="drop-item" data-type="bicara" data-text="Bye">Bye 👋</div>
+              <div class="drop-item" data-type="bicara" data-text="Hehehe">Hehehe 😆</div>
+            </div>
+          </div>
 
-      <div class="toolbar-btn" id="btn-jalan">
-        🡱 Jalan
-        <div class="dropup" id="dropup-jalan">
-          <div class="drop-item" data-type="jalan" data-dir="up">🡱 Atas</div>
-          <div class="drop-item" data-type="jalan" data-dir="right">🡲 Kanan</div>
-          <div class="drop-item" data-type="jalan" data-dir="left">🡸 Kiri</div>
-          <div class="drop-item" data-type="jalan" data-dir="down">🡳 Bawah</div>
+          <div class="toolbar-btn" id="btn-jalan">
+            🡱 Jalan
+            <div class="dropup" id="dropup-jalan">
+              <div class="drop-item" data-type="jalan" data-dir="up">🡱 Atas</div>
+              <div class="drop-item" data-type="jalan" data-dir="right">🡲 Kanan</div>
+              <div class="drop-item" data-type="jalan" data-dir="left">🡸 Kiri</div>
+              <div class="drop-item" data-type="jalan" data-dir="down">🡳 Bawah</div>
+            </div>
+          </div>
+
         </div>
-      </div>
     </div>
+
 
     <!-- WORKSPACE kanan -->
     <div class="workspace-area">
@@ -61,6 +67,14 @@
     </div>
 
   </div>
+
+  <div id="win-overlay" class="win-overlay">
+    <div class="win-popup">
+      <div class="win-title">🎉 YOU WIN! 🎉</div>
+      <button class="btn-kembali" id="btn-kembali-win">⮌ Kembali</button>
+    </div>
+  </div>
+
 
   <script src="easy-text-script.js"></script>
   </body>

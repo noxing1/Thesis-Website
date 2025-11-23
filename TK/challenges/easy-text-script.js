@@ -9,6 +9,8 @@ let commandQueue = [];
 let isRunningCommands = false;
 let hasDied = false;
 
+let projectiles = [];
+
 // ------------------------
 // LOAD IMAGES
 // ------------------------
@@ -79,11 +81,11 @@ let beeAnimations = {
 };
 
 /* Load 1 anim */
-async function loadAnim(name) {
-  const json = await fetch(`../Asset/bee-spritesheet/${name}.json`).then(r => r.json());
+async function loadProjectile() {
+  const json = await fetch(`../Asset/bee-spritesheet/projectile.json`).then(r => r.json());
 
   const img = new Image();
-  img.src = `../Asset/bee-spritesheet/${name}.png`;
+  img.src = `../Asset/bee-spritesheet/projectile.png`;
 
   return {
     img: img,
@@ -92,6 +94,10 @@ async function loadAnim(name) {
     frames: json.frames
   };
 }
+
+let projectileAnim = null;
+
+loadProjectile().then(anim => projectileAnim = anim);
 
 function findBeeSpawn() {
   if (!mapData || !beeAnimations.idle) return;
@@ -124,6 +130,20 @@ function findBeeSpawn() {
       }
     }
   }
+}
+
+async function loadAnim(name) {
+  const json = await fetch(`../Asset/bee-spritesheet/${name}.json`).then(r => r.json());
+
+  const img = new Image();
+  img.src = `../Asset/bee-spritesheet/${name}.png`;
+
+  return {
+    img: img,
+    fw: json.frameWidth,
+    fh: json.frameHeight,
+    frames: json.frames
+  };
 }
 
 /* Load all anims */
@@ -304,7 +324,7 @@ function drawBee() {
   const sx = bee.frame * anim.fw;
   const sy = 0;
 
-  const scale = 1;
+  const scale = 0.3;
 
   const w = anim.fw * scale;
   const h = anim.fh * scale;
@@ -337,6 +357,9 @@ function gameLoop(timestamp) {
   renderTiledMap();
   updateBee(16);
   drawBee();
+  updateProjectiles(16);
+  drawProjectiles();
+
 
   checkWinLose();
 
@@ -634,8 +657,8 @@ function renderWorkspace() {
    DROPUP BUTTONS
 ========================================= */
 
-document.getElementById("btn-bicara").onclick = () => {
-  let d = document.getElementById("dropup-bicara");
+document.getElementById("btn-tembak").onclick = () => {
+  let d = document.getElementById("dropup-tembak");
   d.style.display = d.style.display === "flex" ? "none" : "flex";
   document.getElementById("dropup-jalan").style.display = "none";
 };
@@ -663,12 +686,11 @@ document.querySelectorAll(".drop-item").forEach(item => {
 
     let type = item.getAttribute("data-type");
 
-    if (type === "bicara") {
-      let t = item.getAttribute("data-text");
-      block.innerText = "🗣️ " + t;
-      block.setAttribute("data-type", "bicara");
-      block.setAttribute("data-text", t);
+    if (type === "tembak") {
+      block.innerText = "🔫 Tembak";
+      block.setAttribute("data-type", "tembak");
     }
+
 
     if (type === "jalan") {
       let dir = item.getAttribute("data-dir");
@@ -721,9 +743,10 @@ document.getElementById("btn-run").onclick = () => {
 
         let t = b.getAttribute("data-type");
 
-        if (t === "bicara") {
-            commandQueue.push({type:"talk", text:b.getAttribute("data-text")});
+        if (t === "tembak") {
+          commandQueue.push({ type: "shoot" });
         }
+
 
         if (t === "jalan") {
             commandQueue.push({type:"move", dir:b.getAttribute("data-direction")});
@@ -748,10 +771,10 @@ function runNextCommand() {
 
   const cmd = commandQueue.shift();
 
-  if (cmd.type === "talk") {
-    console.log("Lebah bicara:", cmd.text);
-    // Tuan bisa tambahkan dialog bubble nanti
-    runNextCommand();
+  if (cmd.type === "shoot") {
+    shootProjectile();
+    // beri delay kecil agar animasi terlihat
+    setTimeout(runNextCommand, 300);
   }
 
   if (cmd.type === "move") {
@@ -784,3 +807,60 @@ function getTileAt(layerName, px, py) {
 document.getElementById("btn-back").onclick = () => {
     window.location.href = "../challenge-list.html";
 };
+
+function shootProjectile() {
+  if (!projectileAnim) return;
+
+  const anim = beeAnimations[bee.state] || beeAnimations.idle;
+  const beeHeight = anim.fh * 0.3;
+  
+  const offsetY = beeHeight * 0.1; // posisi lebih ke bawah
+
+  const offsetX = bee.facing === "right" ? 20 : -4;
+
+  projectiles.push({
+    x: bee.x + offsetX,
+    y: bee.y + offsetY,
+    vx: bee.facing === "right" ? 5 : -5,
+    vy: 0,
+    frame: 0
+  });
+
+  bee.state = "shoot";
+  bee.frame = 0;
+}
+
+function updateProjectiles(dt) {
+  projectiles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+  });
+
+  // hapus kalau keluar layar
+  projectiles = projectiles.filter(p => p.x > 0 && p.x < canvas.width);
+}
+
+function drawProjectiles() {
+  if (!projectileAnim) return;
+
+  projectiles.forEach(p => {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+
+    if (p.vx < 0) {
+      ctx.scale(-1, 1); // projectile menghadap kiri
+      ctx.translate(-projectileAnim.fw * 2, 0);
+    }
+
+    ctx.drawImage(
+      projectileAnim.img,
+      0, 0, projectileAnim.fw, projectileAnim.fh,
+      0, 0,
+      projectileAnim.fw * 2,
+      projectileAnim.fh * 2
+    );
+
+    ctx.restore();
+  });
+}
+

@@ -11,6 +11,19 @@ let hasDied = false;
 
 let projectiles = [];
 
+const BEE_SCALE = 0.9;
+
+let cam = {
+  x: 0,
+  y: 0,
+  zoom: 1.5,   // <<--- ini angka yang nanti bisa tuan ubah
+  targetX: 0,
+  targetY: 0,
+  targetZoom: 1.5,
+  speed: 0.02, // linear movement speed
+  lockOnBee: true
+};
+
 // ------------------------
 // LOAD IMAGES
 // ------------------------
@@ -118,8 +131,9 @@ function findBeeSpawn() {
           const oy = obj.y * scale;
 
           // Tiled object = TOP-LEFT
-          bee.x = ox - fw / 2;  
-          bee.y = oy - fh / 2;
+          bee.x = ox - (fw * BEE_SCALE) / 2;  
+          bee.y = oy - (fh * BEE_SCALE) / 2;
+
 
           bee.facing = "right";
           hasDied = false;
@@ -157,7 +171,7 @@ async function loadBee() {
 loadBee();
 
 function moveBeeOnce(dir, callback) {
-  const step = 32;
+  const step = 24;
   let moved = 0;
 
   bee.state = "walk";
@@ -207,7 +221,13 @@ let cameraY = 0;
 // DRAW TILE FUNCTION
 // ------------------------
 function drawTileFromTileset(gid, worldX, worldY) {
-  if (gid === 0) return;
+  if (gid === 0) {
+    // tetap gambar grid untuk tile kosong
+    ctx.strokeStyle = "rgba(0,0,0,0.25)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(worldX, worldY, DRAW_SIZE, DRAW_SIZE);
+    return;
+  }
 
   const FLIPPED_H = 0x80000000;   // horizontal
   const FLIPPED_V = 0x40000000;   // vertical
@@ -253,6 +273,9 @@ function drawTileFromTileset(gid, worldX, worldY) {
   );
 
   ctx.restore();
+  ctx.strokeStyle = "rgba(0,0,0,0.25)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(worldX, worldY, DRAW_SIZE, DRAW_SIZE);
 }
 
 // ------------------------
@@ -273,7 +296,12 @@ Promise.all([loadMap(), loadBee()]).then(() => {
   ctx.imageSmoothingEnabled = false;
 
   findBeeSpawn();
+  setTimeout(waitAtBeeThenShowFlower, 300);
+
+
+  gameLoop(); // ← Pindah ke sini
 });
+
 
 function renderTiledMap() {
   if (!mapData) return;
@@ -284,11 +312,18 @@ function renderTiledMap() {
     const tiles = layer.data;
 
     for (let i = 0; i < tiles.length; i++) {
-      let gid = tiles[i];
-      if (gid === 0) continue;
 
+      const gid = tiles[i];
+
+      // Hitung koordinat dulu
       const x = (i % mapData.width) * DRAW_SIZE;
       const y = Math.floor(i / mapData.width) * DRAW_SIZE;
+
+      if (gid === 0) {
+          drawTileFromTileset(0, x, y);
+          continue;
+      }
+
 
       drawTileFromTileset(gid, x, y);
     }
@@ -324,7 +359,7 @@ function drawBee() {
   const sx = bee.frame * anim.fw;
   const sy = 0;
 
-  const scale = 0.3;
+  const scale = BEE_SCALE;
 
   const w = anim.fw * scale;
   const h = anim.fh * scale;
@@ -354,19 +389,33 @@ function drawBee() {
 function gameLoop(timestamp) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  updateCamera();
+
+  // ============================
+  // BEGIN CAMERA TRANSFORM
+  // ============================
+  ctx.save();
+  ctx.scale(cam.zoom, cam.zoom);
+  ctx.translate(-cam.x, -cam.y);
+  // ============================
+
+  // Render semua hal di dalam transform
   renderTiledMap();
   updateBee(16);
   drawBee();
   updateProjectiles(16);
   drawProjectiles();
 
+  // ============================
+  // END CAMERA TRANSFORM
+  // ============================
+  ctx.restore();
 
   checkWinLose();
-
   requestAnimationFrame(gameLoop);
 }
 
-gameLoop();
+
 
 function checkWinLose() {
   if (!mapData) return;
@@ -808,19 +857,32 @@ document.getElementById("btn-back").onclick = () => {
     window.location.href = "../challenge-list.html";
 };
 
+const PROJECTILE_SCALE = 1;
+
 function shootProjectile() {
   if (!projectileAnim) return;
 
-  const anim = beeAnimations[bee.state] || beeAnimations.idle;
-  const beeHeight = anim.fh * 0.3;
-  
-  const offsetY = beeHeight * 0.1; // posisi lebih ke bawah
+  // Gunakan ukuran lebah dari anim idle (konstan)
+  const base = beeAnimations.idle;
 
-  const offsetX = bee.facing === "right" ? 20 : -4;
+  const w = base.fw * BEE_SCALE;
+  const h = base.fh * BEE_SCALE;
+
+  // koordinat center lebah
+  const cx = bee.x + w / 2;
+  const cy = bee.y + h / 2;
+
+  // horizontal offset
+  const offsetX = bee.facing === "right"
+    ? w * 0.45
+    : -w * 0.45 - (projectileAnim.fw * PROJECTILE_SCALE);
+
+  // vertical offset → 0.1 dari kaki (bawah)
+  const offsetY = (h * 0.85) - (h / 2);
 
   projectiles.push({
-    x: bee.x + offsetX,
-    y: bee.y + offsetY,
+    x: cx + offsetX,
+    y: cy + offsetY,
     vx: bee.facing === "right" ? 5 : -5,
     vy: 0,
     frame: 0
@@ -847,20 +909,108 @@ function drawProjectiles() {
     ctx.save();
     ctx.translate(p.x, p.y);
 
+    // flip jika ke kiri
     if (p.vx < 0) {
-      ctx.scale(-1, 1); // projectile menghadap kiri
-      ctx.translate(-projectileAnim.fw * 2, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-projectileAnim.fw * PROJECTILE_SCALE, 0);
     }
 
     ctx.drawImage(
       projectileAnim.img,
-      0, 0, projectileAnim.fw, projectileAnim.fh,
       0, 0,
-      projectileAnim.fw * 2,
-      projectileAnim.fh * 2
+      projectileAnim.fw,
+      projectileAnim.fh,
+      0, 0,
+      projectileAnim.fw * PROJECTILE_SCALE,
+      projectileAnim.fh * PROJECTILE_SCALE
     );
 
     ctx.restore();
   });
 }
 
+function updateCamera() {
+
+  if (cam.lockOnBee) {
+    // kamera mengikuti lebah
+    const base = beeAnimations.idle;
+    const w = base.fw * BEE_SCALE;
+    const h = base.fh * BEE_SCALE;
+
+    const cx = bee.x + w / 2;
+    const cy = bee.y + h / 2;
+
+    cam.targetX = cx - canvas.width / (2 * cam.zoom);
+    cam.targetY = cy - canvas.height / (2 * cam.zoom);
+  }
+
+  // gerakan kamera linear
+  cam.x += (cam.targetX - cam.x) * cam.speed;
+  cam.y += (cam.targetY - cam.y) * cam.speed;
+
+  // zoom = tetap (tuan ubah langsung cam.zoom)
+}
+
+function focusFlowerForIntro() {
+  cam.lockOnBee = false;
+
+  const layer = mapData.layers.find(
+    l => l.type === "objectgroup" && l.name === "FlowerZoom"
+  );
+  if (!layer || layer.objects.length === 0) {
+    cam.lockOnBee = true;
+    return;
+  }
+
+  const obj = layer.objects[0];
+
+  // scale dari Tiled → canvas
+  const scale = DRAW_SIZE / TILE_SIZE; // 1.5
+
+  const centerX = (obj.x + obj.width / 2) * scale;
+  const centerY = (obj.y + obj.height / 2) * scale;
+
+  cam.targetX = centerX - canvas.width / (2 * cam.zoom);
+  cam.targetY = centerY - canvas.height / (2 * cam.zoom);
+
+  const checkInterval = setInterval(() => {
+    const dx = Math.abs(cam.x - cam.targetX);
+    const dy = Math.abs(cam.y - cam.targetY);
+
+    if (dx < 10 && dy < 10) {
+      clearInterval(checkInterval);
+      cam.lockOnBee = true;
+    }
+  }, 50);
+}
+
+function waitAtBeeThenShowFlower() {
+  // Matikan lock agar kamera benar-benar berhenti di lebah
+  cam.lockOnBee = false;
+
+  // target kamera diarahkan ke lebah
+  const base = beeAnimations.idle;
+  const w = base.fw * BEE_SCALE;
+  const h = base.fh * BEE_SCALE;
+
+  const cx = bee.x + w / 2;
+  const cy = bee.y + h / 2;
+
+  cam.targetX = cx - canvas.width / (2 * cam.zoom);
+  cam.targetY = cy - canvas.height / (2 * cam.zoom);
+
+  // tunggu sampai kamera benar-benar sampai lebah
+  const check = setInterval(() => {
+    const dx = Math.abs(cam.x - cam.targetX);
+    const dy = Math.abs(cam.y - cam.targetY);
+
+    if (dx < 10 && dy < 10) {
+      clearInterval(check);
+
+      // Tahan kamera 0.5 detik
+      setTimeout(() => {
+        focusFlowerForIntro();
+      }, 500); // <--- durasi jeda
+    }
+  }, 50);
+}

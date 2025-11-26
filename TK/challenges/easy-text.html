@@ -17,7 +17,7 @@
 
   <canvas id="game"></canvas>
 
-  <button id="btn-reset-manual" class="btn-reset-manual">↺ Reset</button>
+  <button id="btn-reset-manual" class="btn-reset-manual">Restart?</button>
 
   <div class="bottom-panel">
 
@@ -25,14 +25,6 @@
     <div class="toolbar-area">
       <h3>Blocks</h3>
         <div class="toolbar-buttons">
-
-          <div class="toolbar-btn" id="btn-tembak">
-            🔫 Tembak
-            <div class="dropup" id="dropup-tembak">
-              <div class="drop-item" data-type="tembak">Tembak 🔫</div>
-            </div>
-          </div>
-
 
           <div class="toolbar-btn" id="btn-jalan">
             🡱 Jalan
@@ -44,12 +36,22 @@
             </div>
           </div>
 
+          <div class="toolbar-btn" id="btn-tembak">
+            🔫 Tembak
+            <div class="dropup" id="dropup-tembak">
+              <div class="drop-item" data-type="tembak">Tembak 🔫</div>
+            </div>
+          </div>
+
         </div>
     </div>
 
 
     <!-- WORKSPACE kanan -->
     <div class="workspace-area">
+
+      <button id="btn-reset-workspace" class="btn-reset-workspace">↺ Clear</button>
+
       <h3>Workspace</h3>
       <div id="slots" class="workspace-scroll">
         <div class="slot"></div>
@@ -74,6 +76,13 @@
     </div>
   </div>
 
+  <div id="intro-popup">
+    <div class="intro-content">
+      <canvas id="intro-bee-canvas" width="64" height="64"></canvas>
+      <div class="intro-arrow">👉</div>
+      <img src="../Asset/flower-demo.png" class="intro-flower">
+    </div>
+  </div>
 
   <script src="easy-text-script.js"></script>
   </body>

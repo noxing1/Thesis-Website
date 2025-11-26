@@ -60,15 +60,22 @@ body {
   position: fixed;
   top: 60px;
   left: 50%;
-  transform: translateX(-50%);
-  width: 60vw;                 /* ← lebih kecil */
-  height: calc(60vw * 0.5);    /* rasio 2:1 mirip map kecil */
-  max-height: calc(100vh - 250px);
-  image-rendering: pixelated;
-  border: 2px solid #fff2;     /* opsional, estetika */
-  border-radius: 10px;
-}
+  transform: translateX(-50%) scale(1.415);
+  transform-origin: top center;
+  
+  /* HAPUS definisi width & height paksa */
+  width: auto;
+  height: auto;
 
+  /* Agar tetap responsif tanpa mengubah aspect ratio */
+  max-width: 90vw;
+  max-height: calc(100vh - 250px);
+
+  image-rendering: pixelated;
+  border: 2px solid #fff2;
+  border-radius: 10px;
+  display: block;
+}
 
 /* =========================================
    BOTTOM PANEL
@@ -189,6 +196,26 @@ body {
   justify-content: center;
   overflow-x: auto;     /* ← WAJIB: aktifkan scroll horizontal */
   overflow-y: hidden;   /* opsional: agar tidak ada scroll vertikal */
+  position: relative;
+}
+
+.btn-reset-workspace {
+  position: fixed;
+  right: 10px;
+  bottom: 145px;
+  background: #ffeab2;
+  border: 2px solid var(--tk-brown);
+  color: var(--tk-brown);
+  font-size: 14px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 3px 5px rgba(0,0,0,0.25);
+  z-index: 10;
+}
+
+.btn-reset-workspace:hover {
+  background: #ffdfa0;
 }
 
 .workspace-scroll {
@@ -320,3 +347,47 @@ body {
 .btn-kembali:hover {
   background: #ffee4e;
 }
+
+/* =============================
+   INTRO POPUP
+============================= */
+#intro-popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  animation: fadeOut 1s ease-in-out 4s forwards;
+}
+
+.intro-content {
+  background: #ffeb8a;
+  border: 4px solid var(--tk-brown);
+  border-radius: 18px;
+  padding: 25px 35px;
+  display: flex;
+  flex-direction: row;       /* ← HORIZONTAL */
+  align-items: center;
+  justify-content: center;
+  gap: 40px;                 /* ← jarak antar item */
+}
+
+#intro-bee-canvas {
+  width: 80px;
+  height: 80px;
+  image-rendering: pixelated;
+}
+
+.intro-flower {
+  width: 80px;
+  height: 80px;
+  image-rendering: pixelated;
+}
+
+.intro-arrow {
+  font-size: 60px;
+  line-height: 60px;
+}
+

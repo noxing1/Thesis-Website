@@ -95,10 +95,10 @@ let beeAnimations = {
 
 /* Load 1 anim */
 async function loadProjectile() {
-  const json = await fetch(`../Asset/bee-spritesheet/projectile.json`).then(r => r.json());
+  const json = await fetch(`../Asset/Sprites/projectile.json`).then(r => r.json());
 
   const img = new Image();
-  img.src = `../Asset/bee-spritesheet/projectile.png`;
+  img.src = `../Asset/Sprites/projectile.png`;
 
   return {
     img: img,
@@ -147,10 +147,10 @@ function findBeeSpawn() {
 }
 
 async function loadAnim(name) {
-  const json = await fetch(`../Asset/bee-spritesheet/${name}.json`).then(r => r.json());
+  const json = await fetch(`../Asset/Sprites/${name}.json`).then(r => r.json());
 
   const img = new Image();
-  img.src = `../Asset/bee-spritesheet/${name}.png`;
+  img.src = `../Asset/Sprites/${name}.png`;
 
   return {
     img: img,
@@ -284,7 +284,7 @@ function drawTileFromTileset(gid, worldX, worldY) {
 let mapData = null;
 
 async function loadMap() {
-  const res = await fetch("../Asset/JSON/Background-easy-walk.json");
+  const res = await fetch("../Asset/Sprites/Background-easy-walk.json");
   mapData = await res.json();
   console.log("MAP LOADED", mapData);
 }
@@ -296,7 +296,6 @@ Promise.all([loadMap(), loadBee()]).then(() => {
   ctx.imageSmoothingEnabled = false;
 
   findBeeSpawn();
-  setTimeout(waitAtBeeThenShowFlower, 300);
 
 
   gameLoop(); // ← Pindah ke sini
@@ -420,15 +419,23 @@ function gameLoop(timestamp) {
 function checkWinLose() {
   if (!mapData) return;
 
-  // WIN → flower tile > 0
-  const flower = getTileAt("Flower", bee.x, bee.y);
+  // ukuran lebah
+  const base = beeAnimations.idle;
+  const w = base.fw * BEE_SCALE;
+  const h = base.fh * BEE_SCALE;
+
+  const cx = bee.x + w / 2;
+  const cy = bee.y + h / 2;
+
+  // WIN
+  const flower = getTileAt("Flower", cx, cy);
   if (flower > 0) {
     triggerWin();
     return;
   }
 
-  // LOSE → collider tile > 0 atau keluar map (-1)
-  const collider = getTileAt("Collider", bee.x, bee.y);
+  // LOSE
+  const collider = getTileAt("Collider", cx, cy);
   if (collider > 0 || collider === -1) {
     triggerLose();
     return;
@@ -812,23 +819,28 @@ document.getElementById("btn-run").onclick = () => {
 };
 
 function runNextCommand() {
-  if (commandQueue.length === 0) {
-    isRunningCommands = false;
-    bee.state = "idle";
-    return;
-  }
+    if (commandQueue.length === 0) {
+        isRunningCommands = false;
+        bee.state = "idle";
+        return;
+    }
 
-  const cmd = commandQueue.shift();
+    // Delay GLOBAL per block = 500ms
+    setTimeout(() => {
 
-  if (cmd.type === "shoot") {
-    shootProjectile();
-    // beri delay kecil agar animasi terlihat
-    setTimeout(runNextCommand, 300);
-  }
+        const cmd = commandQueue.shift();
 
-  if (cmd.type === "move") {
-    moveBeeOnce(cmd.dir, runNextCommand);
-  }
+        if (cmd.type === "shoot") {
+            shootProjectile();
+            // tambahan delay kecil untuk efek animasi tembak
+            setTimeout(runNextCommand, 300);
+        }
+
+        if (cmd.type === "move") {
+            moveBeeOnce(cmd.dir, runNextCommand);
+        }
+
+    }, 500);
 }
 
 function getTileAt(layerName, px, py) {
@@ -951,44 +963,12 @@ function updateCamera() {
   // zoom = tetap (tuan ubah langsung cam.zoom)
 }
 
-function focusFlowerForIntro() {
+// =============================================
+// INTRO CAMERA SEQUENCE
+// =============================================
+function cameraToBee(callback) {
   cam.lockOnBee = false;
 
-  const layer = mapData.layers.find(
-    l => l.type === "objectgroup" && l.name === "FlowerZoom"
-  );
-  if (!layer || layer.objects.length === 0) {
-    cam.lockOnBee = true;
-    return;
-  }
-
-  const obj = layer.objects[0];
-
-  // scale dari Tiled → canvas
-  const scale = DRAW_SIZE / TILE_SIZE; // 1.5
-
-  const centerX = (obj.x + obj.width / 2) * scale;
-  const centerY = (obj.y + obj.height / 2) * scale;
-
-  cam.targetX = centerX - canvas.width / (2 * cam.zoom);
-  cam.targetY = centerY - canvas.height / (2 * cam.zoom);
-
-  const checkInterval = setInterval(() => {
-    const dx = Math.abs(cam.x - cam.targetX);
-    const dy = Math.abs(cam.y - cam.targetY);
-
-    if (dx < 10 && dy < 10) {
-      clearInterval(checkInterval);
-      cam.lockOnBee = true;
-    }
-  }, 50);
-}
-
-function waitAtBeeThenShowFlower() {
-  // Matikan lock agar kamera benar-benar berhenti di lebah
-  cam.lockOnBee = false;
-
-  // target kamera diarahkan ke lebah
   const base = beeAnimations.idle;
   const w = base.fw * BEE_SCALE;
   const h = base.fh * BEE_SCALE;
@@ -999,18 +979,126 @@ function waitAtBeeThenShowFlower() {
   cam.targetX = cx - canvas.width / (2 * cam.zoom);
   cam.targetY = cy - canvas.height / (2 * cam.zoom);
 
-  // tunggu sampai kamera benar-benar sampai lebah
   const check = setInterval(() => {
-    const dx = Math.abs(cam.x - cam.targetX);
-    const dy = Math.abs(cam.y - cam.targetY);
-
-    if (dx < 10 && dy < 10) {
+    if (Math.abs(cam.x - cam.targetX) < 10 && Math.abs(cam.y - cam.targetY) < 10) {
       clearInterval(check);
-
-      // Tahan kamera 0.5 detik
-      setTimeout(() => {
-        focusFlowerForIntro();
-      }, 500); // <--- durasi jeda
+      setTimeout(callback, 400); // jeda sebelum lanjut
     }
   }, 50);
 }
+
+function cameraToFlower(callback) {
+  cam.lockOnBee = false;
+
+  const layer = mapData.layers.find(
+    l => l.type === "objectgroup" && l.name === "FlowerZoom"
+  );
+  if (!layer || layer.objects.length === 0) return callback();
+
+  const obj = layer.objects[0];
+  const scale = DRAW_SIZE / TILE_SIZE;
+
+  const centerX = (obj.x + obj.width / 2) * scale;
+  const centerY = (obj.y + obj.height / 2) * scale;
+
+  cam.targetX = centerX - canvas.width / (2 * cam.zoom);
+  cam.targetY = centerY - canvas.height / (2 * cam.zoom);
+
+  const check = setInterval(() => {
+    if (Math.abs(cam.x - cam.targetX) < 10 && Math.abs(cam.y - cam.targetY) < 10) {
+      clearInterval(check);
+      setTimeout(callback, 500);
+    }
+  }, 50);
+}
+
+function cameraBackToBee(callback) {
+  cameraToBee(callback); // gunakan fungsi yang sama
+}
+
+
+// =============================================
+// RUN INTRO CAMERA AFTER POPUP CLOSE
+// =============================================
+function runIntroCameraSequence() {
+  cameraToBee(() => {
+    cameraToFlower(() => {
+      cameraBackToBee(() => {
+        cam.lockOnBee = true; // kembali ke mode follow lebah
+      });
+    });
+  });
+}
+
+
+// =============================================
+// INTRO POPUP BEE ANIMATION
+// =============================================
+let introBeeImg = new Image();
+introBeeImg.src = "../Asset/Sprites/normal.png";
+
+let introBeeJSON = null;
+
+fetch("../Asset/Sprites/normal.json")
+  .then(r => r.json())
+  .then(json => {
+    introBeeJSON = json;
+    animateIntroBee();
+  });
+
+function animateIntroBee() {
+  const cvs = document.getElementById("intro-bee-canvas");
+  const ictx = cvs.getContext("2d");
+
+  let frame = 0;
+
+  function loop() {
+    if (!introBeeJSON) return requestAnimationFrame(loop);
+
+    let fw = introBeeJSON.frameWidth;
+    let fh = introBeeJSON.frameHeight;
+
+    ictx.clearRect(0, 0, cvs.width, cvs.height);
+
+    ictx.drawImage(
+      introBeeImg,
+      frame * fw, 0, fw, fh,
+      0, 0, cvs.width, cvs.height
+    );
+
+    frame = (frame + 1) % introBeeJSON.frames;
+
+    setTimeout(() => requestAnimationFrame(loop), 150);
+  }
+
+  loop();
+}
+
+// auto close popup
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    const popup = document.getElementById("intro-popup");
+    popup.style.display = "none";
+
+    // MULAI SEQUENCE KAMERA SETELAH POPUP HILANG
+    runIntroCameraSequence();
+
+  }, 2000);
+});
+
+document.getElementById("btn-reset-workspace").addEventListener("click", () => {
+
+    // Hapus block dari DOM (tampilan)
+    const slots = document.querySelectorAll(".slot");
+    slots.forEach(slot => {
+        const block = slot.querySelector(".block");
+        if (block) block.remove();
+    });
+
+    // HAPUS DATA SEBENARNYA
+    workspaceSlots = Array(10).fill(null);
+
+    // Re-render untuk memastikan slot benar-benar kosong
+    renderWorkspace();
+});
+

@@ -85,8 +85,8 @@ body {
   cursor: pointer;
   font-size: 14px;
   font-weight: bold;
-  background: black;
-  color: white;
+  background: gold;
+  color: black;
   transition: 0.25s ease;
   box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
 }

@@ -41,18 +41,6 @@ body {
   box-shadow: 0 3px 10px rgba(0,0,0,0.4);
 }
 
-.header-bar button {
-  width: 80px;
-  height: 60px;
-  border-radius: 10px;
-  background: yellow;
-  border: 2px solid var(--tk-brown);
-  color: var(--tk-brown);
-  font-size: 18px;
-  cursor: pointer;
-  box-shadow: 0 3px 5px rgba(0,0,0,0.25);
-}
-
 /* =========================================
    CANVAS
 ========================================= */
@@ -98,14 +86,6 @@ body {
 /* =========================================
    TOOLBAR AREA 50%
 ========================================= */
-.toolbar-buttons {
-  display: flex;
-  flex-direction: column;   /* ← VERTIKAL */
-  gap: 12px;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-}
 
 .toolbar-buttons {
   display: flex;
@@ -126,7 +106,7 @@ body {
 }
 
 .toolbar-area h3 {
-  margin: 17px 0 0 0;  /* turun sedikit */
+  margin: 13px 0 10px 0;  /* turun sedikit */
   color: var(--tk-brown);
   width: 100%;
   text-align: left;    /* kembali ke kiri */
@@ -154,6 +134,11 @@ body {
   position: relative;
 }
 
+.block-label {
+  font-size: 40px;
+  margin-top: -10px;
+}
+
 /* =========================================
    DROPUP
 ========================================= */
@@ -177,8 +162,9 @@ body {
   padding: 8px;
   border-radius: 8px;
   cursor: grab;
-  font-size: 14px;
+  font-size: 38px;
   color: var(--tk-brown);
+  line-height: 32px;
 }
 
 .drop-item:hover {
@@ -269,12 +255,14 @@ body {
   justify-content: center;
   text-align: center;
   padding: 4px;
-  font-size: 16px;
+  font-size: 38px;
 }
 
 .drag-shadow {
   background: var(--tk-panel-dark);     /* tetap berwarna */
   border: 2px solid var(--tk-brown);
+  font-size: 38px;
+  line-height: 38px;
 }
 
 
@@ -391,3 +379,84 @@ body {
   line-height: 60px;
 }
 
+.honey-reward {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 15px 0 25px 0;
+
+  /* container TIDAK fade */
+  opacity: 1;
+}
+
+.honey-equal {
+  font-size: 38px;
+  font-weight: bold;
+  color: var(--tk-brown);
+}
+
+.honey-icon {
+  height: 60px;         /* biarkan width mengikuti rasio */
+  image-rendering: pixelated;
+}
+
+#honey-number {
+  font-size: 42px;
+  font-weight: bold;
+  color: var(--tk-brown);
+  text-shadow: 2px 2px #fff4;
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+
+.lang-btn {
+  width: 60px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  background: gold;
+  color: black;
+  transition: 0.25s ease;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
+  padding: 0;
+}
+
+.lang-btn:hover {
+  background: rgb(255, 233, 97);
+}
+
+
+.lang-btn:hover {
+  background: #ffdd66;
+}
+
+.title {
+  flex: 1;
+  text-align: center;
+  font-size: 22px;
+  font-weight: bold;
+  color: white;
+  pointer-events: none;
+}
+
+.right-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-btn {
+  width: 102px;
+  height: 40px;
+  border-radius: 10px;
+  background: yellow;
+  border: 2px solid var(--tk-brown);
+  color: var(--tk-brown);
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 3px 5px rgba(0,0,0,0.25);
+}

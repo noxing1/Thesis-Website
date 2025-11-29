@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="18" height="13" tilewidth="16" tileheight="16" infinite="0" nextlayerid="7" nextobjectid="5">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="18" height="13" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="6">
  <tileset firstgid="1" source="Background.tsx"/>
  <tileset firstgid="33" source="Decoration.tsx"/>
  <layer id="1" name="Tile Layer 1" width="18" height="13">
@@ -53,6 +53,9 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <objectgroup id="7" name="Enemy">
+  <object id="5" name="Enemy" x="167.75" y="104.125"/>
+ </objectgroup>
  <objectgroup id="4" name="Spawn">
   <object id="1" name="BeeSpawn" x="136" y="104"/>
  </objectgroup>

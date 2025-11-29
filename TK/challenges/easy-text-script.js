@@ -13,6 +13,8 @@ let projectiles = [];
 
 const BEE_SCALE = 0.9;
 
+let lastTime = 0;
+
 let cam = {
   x: 0,
   y: 0,
@@ -146,11 +148,42 @@ function findBeeSpawn() {
   }
 }
 
+const butterflyColors = ["Blue", "Grey", "Pink", "Red", "White", "Yellow"];
+let butterflyAnimations = [];
+let enemies = [];
+
+// Load semua warna kupu-kupu
+async function loadButterflies() {
+    let list = [];
+
+    for (let color of butterflyColors) {
+        try {
+            const json = await fetch(`../Asset/Sprites/Butterfly${color}.json`).then(r => r.json());
+
+            const img = new Image();
+            img.src = `../Asset/Sprites/Butterfly${color}.png`;
+            await img.decode();
+
+            list.push({
+                img: img,
+                fw: json.frameWidth,
+                fh: json.frameHeight,
+                frames: json.frames
+            });
+        } catch (err) {
+            console.warn("Butterfly JSON not found:", color);
+        }
+    }
+
+    butterflyAnimations = list;
+}
+
 async function loadAnim(name) {
   const json = await fetch(`../Asset/Sprites/${name}.json`).then(r => r.json());
 
   const img = new Image();
   img.src = `../Asset/Sprites/${name}.png`;
+  await img.decode();
 
   return {
     img: img,
@@ -289,18 +322,137 @@ async function loadMap() {
   console.log("MAP LOADED", mapData);
 }
 
-Promise.all([loadMap(), loadBee()]).then(() => {
-  canvas.width = mapData.width * DRAW_SIZE;
-  canvas.height = mapData.height * DRAW_SIZE;
+function loadEnemySpawn() {
+    if (!mapData || butterflyAnimations.length === 0) return;
 
-  ctx.imageSmoothingEnabled = false;
+    const scale = DRAW_SIZE / TILE_SIZE;
 
-  findBeeSpawn();
+    for (let layer of mapData.layers) {
+        if (layer.type === "objectgroup" && layer.name === "Enemy") {
+
+            for (let obj of layer.objects) {
+
+                const bx = obj.x * scale;
+                const by = obj.y * scale;
+
+                const colorIndex = Math.floor(Math.random() * butterflyAnimations.length);
+
+                enemies.push({
+                    x: bx,
+                    y: by,
+                    baseY: by,
+                    frame: 0,
+                    timer: 0,
+                    floatTimer: 0,
+                    color: colorIndex,
+                    dying: false,
+                    alpha: 1,
+                    scale: 1,
+                    puff: 0
+                });
+            }
+        }
+    }
+}
 
 
-  gameLoop(); // ← Pindah ke sini
+function updateEnemies(dt) {
+
+    enemies.forEach(e => {
+
+        if (!e.dying) {
+            // idle flapping (sedikit naik turun)
+            e.y += Math.sin(Date.now() / 150) * 0.1;
+
+            // animasi frame
+            e.timer += dt;
+            if (e.timer > 120) {
+                e.timer = 0;
+                const anim = butterflyAnimations[e.color];
+                e.frame = (e.frame + 1) % anim.frames;
+            }
+
+            return;
+        }
+
+        // ====================
+        // PIXEL-PUFF EFFECT
+        // ====================
+        e.alpha -= 0.08;
+        e.scale += 0.05;
+        e.puff += 0.04;
+
+        if (e.alpha <= 0) {
+            e.remove = true;
+        }
+    });
+
+    enemies = enemies.filter(e => !e.remove);
+}
+
+function drawEnemies() {
+    enemies.forEach(e => {
+        const anim = butterflyAnimations[e.color];
+        if (!anim) return;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, e.alpha);
+
+        ctx.translate(e.x, e.y);
+        ctx.scale(e.scale, e.scale);
+
+        // puff = blur kecil
+        if (e.puff > 0) {
+            ctx.filter = `blur(${e.puff}px)`;
+        }
+
+        ctx.drawImage(
+            anim.img,
+            anim.fw * e.frame, 0,
+            anim.fw, anim.fh,
+            -anim.fw / 2, -anim.fh / 2,
+            anim.fw, anim.fh
+        );
+
+        ctx.restore();
+    });
+}
+
+function checkProjectileHitEnemy(p) {
+
+    for (let e of enemies) {
+        const anim = butterflyAnimations[e.color];
+        const bw = anim.fw * e.scale;
+        const bh = anim.fh * e.scale;
+
+        const dx = p.x - e.x;
+        const dy = p.y - e.y;
+
+        if (Math.abs(dx) < bw/2 && Math.abs(dy) < bh/2) {
+            e.dying = true;
+            p.remove = true;
+            return;
+        }
+    }
+}
+
+Promise.all([
+    loadMap(),
+    loadBee(),
+    loadButterflies()
+]).then(() => {
+
+    // pastikan semua anim lengkap dulu sebelum spawn musuh
+    loadEnemySpawn();  
+
+    canvas.width = mapData.width * DRAW_SIZE;
+    canvas.height = mapData.height * DRAW_SIZE;
+
+    ctx.imageSmoothingEnabled = false;
+
+    findBeeSpawn();
+    requestAnimationFrame(gameLoop); // <--- lebih aman
 });
-
 
 function renderTiledMap() {
   if (!mapData) return;
@@ -386,35 +538,35 @@ function drawBee() {
 }
 
 function gameLoop(timestamp) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!lastTime) lastTime = timestamp;
 
-  updateCamera();
+    let dt = timestamp - lastTime;
+    lastTime = timestamp;
 
-  // ============================
-  // BEGIN CAMERA TRANSFORM
-  // ============================
-  ctx.save();
-  ctx.scale(cam.zoom, cam.zoom);
-  ctx.translate(-cam.x, -cam.y);
-  // ============================
+    // NORMALISASI dt
+    dt = Math.min(dt, 40);
 
-  // Render semua hal di dalam transform
-  renderTiledMap();
-  updateBee(16);
-  drawBee();
-  updateProjectiles(16);
-  drawProjectiles();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // ============================
-  // END CAMERA TRANSFORM
-  // ============================
-  ctx.restore();
+    updateCamera();
 
-  checkWinLose();
-  requestAnimationFrame(gameLoop);
+    ctx.save();
+    ctx.scale(cam.zoom, cam.zoom);
+    ctx.translate(-cam.x, -cam.y);
+
+    renderTiledMap();
+    updateBee(dt);
+    drawBee();
+    updateProjectiles(dt);
+    drawProjectiles();
+    updateEnemies(dt);
+    drawEnemies();
+
+    ctx.restore();
+
+    checkWinLose();
+    requestAnimationFrame(gameLoop);
 }
-
-
 
 function checkWinLose() {
   if (!mapData) return;
@@ -434,6 +586,28 @@ function checkWinLose() {
     return;
   }
 
+  // LOSE BY BUTTERFLY TOUCH
+  for (let e of enemies) {
+      const anim = butterflyAnimations[e.color];
+      if (!anim) continue;
+
+      const bw = anim.fw * e.scale;
+      const bh = anim.fh * e.scale;
+
+      // hitbox lebah
+      const halfW = w / 2;
+      const halfH = h / 2;
+
+      // jika jarak < kombinasi setengah ukuran → collision
+      if (Math.abs(cx - e.x) < (bw/2 + halfW*0.6) &&
+          Math.abs(cy - e.y) < (bh/2 + halfH*0.6)) {
+
+          triggerLose();
+          return;
+      }
+  }
+
+
   // LOSE
   const collider = getTileAt("Collider", cx, cy);
   if (collider > 0 || collider === -1) {
@@ -442,6 +616,26 @@ function checkWinLose() {
   }
 }
 
+function animateHoneyReward() {
+    const num = document.getElementById("honey-number");
+
+    if (!num) return;
+
+    // Reset
+    num.style.opacity = 0;
+    num.innerText = "0";
+
+    // Delay sedikit lalu fade-in angka baru
+    setTimeout(() => {
+        num.style.opacity = 0;
+
+        setTimeout(() => {
+            num.innerText = "1"; // Reward XP
+            num.style.opacity = 1;
+        }, 200);
+
+    }, 300);
+}
 
 function triggerWin() {
   isRunningCommands = false;
@@ -457,12 +651,15 @@ function triggerWin() {
   const overlay = document.getElementById("win-overlay");
   overlay.style.display = "flex";
 
+  // SET ANKA XP → 1
+  const num = document.getElementById("honey-number");
+  num.innerText = "1"; // langsung tampil apa adanya
+
   // Tombol kembali
   document.getElementById("btn-kembali-win").onclick = () => {
     window.location.href = "../challenge-list.html";
   };
 }
-
 
 function triggerLose() {
   if (hasDied) return;
@@ -707,22 +904,48 @@ function renderWorkspace() {
       attachDragEventsToBlock(b);
     }
   });
+
+  // setelah render, update teks sesuai bahasa saat ini
+  applyLanguage(currentLang, true);
 }
+
 
 /* =========================================
    DROPUP BUTTONS
 ========================================= */
 
-document.getElementById("btn-tembak").onclick = () => {
-  let d = document.getElementById("dropup-tembak");
-  d.style.display = d.style.display === "flex" ? "none" : "flex";
-  document.getElementById("dropup-jalan").style.display = "none";
-};
-
 document.getElementById("btn-jalan").onclick = () => {
   let d = document.getElementById("dropup-jalan");
   d.style.display = d.style.display === "flex" ? "none" : "flex";
-  document.getElementById("dropup-bicara").style.display = "none";
+};
+
+// =========================================
+// DRAG LANGSUNG DARI TOMBOL TEMBAK
+// =========================================
+document.getElementById("btn-tembak").onmousedown = (e) => {
+    e.preventDefault();
+
+    let block = document.createElement("div");
+    block.className = "block";
+    block.innerText = getLocalizedBlockText("tembak");
+    block.setAttribute("data-type", "tembak");
+
+    realBlock = block;
+    isFromWorkspace = false;
+
+    // clone visual
+    let clone = block.cloneNode(true);
+    clone.classList.add("drag-shadow");
+    clone.style.position = "absolute";
+    clone.style.zIndex = 9999;
+    document.body.appendChild(clone);
+
+    currentDrag = clone;
+    clone.style.left = e.pageX + "px";
+    clone.style.top = e.pageY + "px";
+
+    window.onmousemove = drag;
+    window.onmouseup = drop;
 };
 
 
@@ -743,7 +966,7 @@ document.querySelectorAll(".drop-item").forEach(item => {
     let type = item.getAttribute("data-type");
 
     if (type === "tembak") {
-      block.innerText = "🔫 Tembak";
+      block.innerText = getLocalizedBlockText("tembak");
       block.setAttribute("data-type", "tembak");
     }
 
@@ -751,7 +974,7 @@ document.querySelectorAll(".drop-item").forEach(item => {
     if (type === "jalan") {
       let dir = item.getAttribute("data-dir");
       let arrow = {up:"🡱", right:"🡲", left:"🡸", down:"🡳"}[dir];
-      block.innerText = `${arrow} Jalan`;
+      block.innerText = getLocalizedBlockText("jalan", dir);
       block.setAttribute("data-type", "jalan");
       block.setAttribute("data-direction", dir);
     }
@@ -874,44 +1097,61 @@ const PROJECTILE_SCALE = 1;
 function shootProjectile() {
   if (!projectileAnim) return;
 
-  // Gunakan ukuran lebah dari anim idle (konstan)
-  const base = beeAnimations.idle;
+  // ➜ AKTIFKAN ANIMASI TEMBAK
+  bee.state = "shoot";
+  bee.frame = 0;
 
+  // Gunakan ukuran lebah dari anim idle
+  const base = beeAnimations.idle;
   const w = base.fw * BEE_SCALE;
   const h = base.fh * BEE_SCALE;
 
-  // koordinat center lebah
   const cx = bee.x + w / 2;
   const cy = bee.y + h / 2;
 
-  // horizontal offset
   const offsetX = bee.facing === "right"
     ? w * 0.45
     : -w * 0.45 - (projectileAnim.fw * PROJECTILE_SCALE);
 
-  // vertical offset → 0.1 dari kaki (bawah)
-  const offsetY = (h * 0.85) - (h / 2);
+  const offsetY = (h * 0.55) - (h / 2);
 
-  projectiles.push({
-    x: cx + offsetX,
-    y: cy + offsetY,
-    vx: bee.facing === "right" ? 5 : -5,
-    vy: 0,
-    frame: 0
-  });
+  // Projectile delay 80ms
+  setTimeout(() => {
+    projectiles.push({
+      x: cx + offsetX,
+      y: cy + offsetY,
+      vx: bee.facing === "right" ? 3 : -3,
+      vy: 0,
+      frame: 0
+    });
+  }, 100);
 
-  bee.state = "shoot";
-  bee.frame = 0;
+  // Kembalikan state ke idle setelah animasi tembak selesai
+  setTimeout(() => {
+    if (bee.state === "shoot") {
+      bee.state = "idle";
+      bee.frame = 0;
+    }
+  }, 1000);
 }
 
 function updateProjectiles(dt) {
-  projectiles.forEach(p => {
-    p.x += p.vx;
-    p.y += p.vy;
-  });
+    projectiles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
 
-  // hapus kalau keluar layar
-  projectiles = projectiles.filter(p => p.x > 0 && p.x < canvas.width);
+        // 1. Cek kena tembok
+        const tile = getTileAt("Collider", p.x, p.y);
+        if (tile > 0 || tile === -1) {
+            p.remove = true;
+            return;
+        }
+
+        // 2. Cek kena musuh
+        checkProjectileHitEnemy(p);
+    });
+
+    projectiles = projectiles.filter(p => !p.remove && p.x > 0 && p.x < canvas.width);
 }
 
 function drawProjectiles() {
@@ -1102,3 +1342,81 @@ document.getElementById("btn-reset-workspace").addEventListener("click", () => {
     renderWorkspace();
 });
 
+/* ===============================
+   SIMPLE LANGUAGE PACK (NEW)
+=============================== */
+
+let currentLang = "en"; // default
+const langBtn = document.getElementById("lang-toggle-btn");
+
+const languagePack = {
+    en: {
+        title: "GO TO THE FLOWER!",
+        back: "⮌ Back",
+        run: "▶ RUN",
+        resetManual: "Restart?",
+        blocksTitle: "Blocks",
+        workspaceTitle: "Workspace",
+        winTitle: "🎉 YOU WIN! 🎉",
+        winBack: "⮌ Back",
+        reset: "↺ Clear"
+    },
+
+    id: {
+        title: "PERGI KE BUNGA!",
+        back: "⮌ Kembali",
+        run: "▶ Jalan",
+        resetManual: "Ulangi?",
+        blocksTitle: "Blok",
+        workspaceTitle: "Area Kerja",
+        winTitle: "🎉 KAMU MENANG! 🎉",
+        winBack: "⮌ Kembali",
+        reset: "↺ Hapus"
+    }
+};
+
+/* ===============================
+   APPLY LANGUAGE (NEW)
+=============================== */
+function applyLanguage(lang, fromWorkspaceRender = false) {
+    const L = languagePack[lang];
+
+    // Header
+    document.querySelector(".title").innerText = L.title;
+    document.getElementById("btn-back").innerText = L.back;
+    document.getElementById("btn-run").innerText = L.run;
+
+    // Manual reset
+    document.getElementById("btn-reset-manual").innerText = L.resetManual;
+
+    // Panel titles
+    document.getElementById("title-blocks").innerText = L.blocksTitle;
+    document.getElementById("title-workspace").innerText = L.workspaceTitle;
+
+    // Win popup
+    document.querySelector(".win-title").innerText = L.winTitle;
+    document.getElementById("btn-kembali-win").innerText = L.winBack;
+
+    document.getElementById("btn-reset-workspace").innerText = L.reset;
+}
+
+/* ===============================
+   LANGUAGE TOGGLE BUTTON
+=============================== */
+langBtn.addEventListener("click", () => {
+    currentLang = currentLang === "en" ? "id" : "en";
+    langBtn.innerText = currentLang.toUpperCase();
+    applyLanguage(currentLang);
+});
+
+/* ===============================
+   BLOCK LABEL (EMOJI ONLY)
+=============================== */
+function getLocalizedBlockText(type, dir = null) {
+    // Tidak ada teks → emoji murni
+    if (type === "tembak") return "🔫";
+    if (type === "jalan") {
+        const arrow = {up:"🡱", right:"🡲", left:"🡸", down:"🡳"}[dir];
+        return arrow;
+    }
+}

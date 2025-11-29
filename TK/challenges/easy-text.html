@@ -10,10 +10,18 @@
   <body>
 
   <div class="header-bar">
-    <button id="btn-back">⮌ Kembali</button>
-    <div class="title">PERGI KE BUNGA!</div>
-    <button id="btn-run">▶ RUN</button>
+    <button id="btn-back" class="nav-btn">⮌ Back</button>
+
+    <div class="title" id="title-text">GO TO THE FLOWER!</div>
+
+    <div class="right-controls">
+        <button id="lang-toggle-btn" class="lang-btn">EN</button>
+        <button id="btn-run" class="nav-btn">▶ RUN</button>
+    </div>
   </div>
+
+
+
 
   <canvas id="game"></canvas>
 
@@ -23,23 +31,23 @@
 
     <!-- TOOLBAR kiri -->
     <div class="toolbar-area">
-      <h3>Blocks</h3>
+      <h3 id="title-blocks">Blocks</h3>
         <div class="toolbar-buttons">
 
           <div class="toolbar-btn" id="btn-jalan">
-            🡱 Jalan
+            <span class="block-label">🡱</span>
             <div class="dropup" id="dropup-jalan">
-              <div class="drop-item" data-type="jalan" data-dir="up">🡱 Atas</div>
-              <div class="drop-item" data-type="jalan" data-dir="right">🡲 Kanan</div>
-              <div class="drop-item" data-type="jalan" data-dir="left">🡸 Kiri</div>
-              <div class="drop-item" data-type="jalan" data-dir="down">🡳 Bawah</div>
+              <div class="drop-item" data-type="jalan" data-dir="up">🡱</div>
+              <div class="drop-item" data-type="jalan" data-dir="right">🡲</div>
+              <div class="drop-item" data-type="jalan" data-dir="left">🡸</div>
+              <div class="drop-item" data-type="jalan" data-dir="down">🡳</div>
             </div>
           </div>
 
           <div class="toolbar-btn" id="btn-tembak">
-            🔫 Tembak
+            <span class="block-label">🔫</span>
             <div class="dropup" id="dropup-tembak">
-              <div class="drop-item" data-type="tembak">Tembak 🔫</div>
+              <div class="drop-item" data-type="tembak">🔫</div>
             </div>
           </div>
 
@@ -52,7 +60,7 @@
 
       <button id="btn-reset-workspace" class="btn-reset-workspace">↺ Clear</button>
 
-      <h3>Workspace</h3>
+      <h3 id="title-workspace">Workspace</h3>
       <div id="slots" class="workspace-scroll">
         <div class="slot"></div>
         <div class="slot"></div>
@@ -72,7 +80,12 @@
   <div id="win-overlay" class="win-overlay">
     <div class="win-popup">
       <div class="win-title">🎉 YOU WIN! 🎉</div>
-      <button class="btn-kembali" id="btn-kembali-win">⮌ Kembali</button>
+      <div id="honey-reward" class="honey-reward">
+        <img src="../Asset/Sprites/Honeycomb.png" class="honey-icon">
+        <div class="honey-equal">=</div>
+        <span id="honey-number">1</span>
+      </div>
+      <button class="btn-kembali" id="btn-kembali-win">⮌ BACK</button>
     </div>
   </div>
 

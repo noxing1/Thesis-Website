@@ -4,39 +4,81 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Website-Thesis_Ahmad Waliyyul Afkar</title>
-  <link rel="stylesheet" href="login_Style.css">
+  <title>BeeCoder - Login</title>
+  <link rel="stylesheet" href="index-style.css">
 </head>
 
-<body class="theme-tk"> <!-- Default theme -->
+<body>
 
-    <!-- IMAGE ANAK BELAJAR -->
+    <!-- LOGIN OVERLAY -->
+    <div id="login-overlay" class="overlay hidden">
+
+        <!-- LOGIN WINDOW -->
+        <div id="login-window" class="modal-window">
+            <h2 class="modal-title">Login</h2>
+
+            <input type="text" id="login-username" placeholder="Username">
+            <input type="password" id="login-password" placeholder="Password">
+
+            <label class="toggle">
+                <input type="checkbox" id="remember-me">
+                <span>Remember me</span>
+            </label>
+
+            <p id="login-error" class="error-msg hidden">Wrong username/password</p>
+
+            <button id="login-btn">Login</button>
+
+            <p class="small-text">
+                Belum punya akun? <span id="go-create" class="link">Click here</span>
+            </p>
+        </div>
+
+        <!-- CREATE ACCOUNT WINDOW -->
+        <div id="create-window" class="modal-window hidden">
+            <h2 class="modal-title">Create Account</h2>
+
+            <input type="text" id="create-username" placeholder="Username">
+            <input type="password" id="create-password" placeholder="Password">
+            <input type="password" id="create-password2" placeholder="Repeat Password">
+
+            <p id="create-error" class="error-msg hidden"></p>
+
+            <button id="create-btn">Create Account</button>
+
+            <p class="small-text">
+                Sudah punya akun? <span id="go-login" class="link">Click here</span>
+            </p>
+        </div>
+
+    </div>
+
+    <!-- MAIN UI -->
     <div class="left-image">
-      <img src="Asset/Anak-Belajar.jpg" alt="Anak Belajar">
+        <img src="Asset/Anak-Belajar.jpg" alt="Anak Belajar">
     </div>
 
-    <!-- TEXT SECTION -->
     <div class="content-box">
-      <h1>Selamat Datang di <span class="brand">Placeholder.com</span>!</h1>
-      <p class="tagline">Mulai perjalanan kodingmu dengan cara yang seru dan mudah.</p>
+        <h1>Selamat Datang di <span class="brand">BeeCoder</span>!</h1>
+        <p class="tagline">Mulai perjalanan kodingmu dengan cara yang seru dan mudah.</p>
 
-      <h3>Apakah kamu:</h3>
+        <h3>Apakah kamu:</h3>
 
-      <div class="school-buttons">
-        <button id="btn-tk">Taman Kanak-Kanak</button>
-        <span class="or-text">atau</span>
-        <button id="btn-sd">Sekolah Dasar</button>
-      </div>
+        <div class="school-buttons">
+            <button id="btn-tk">Taman Kanak-Kanak</button>
+            <span class="or-text">atau</span>
+            <button id="btn-sd">Sekolah Dasar</button>
+        </div>
 
-      <p class="footer-text">
-        Baru di <span class="brand">Placeholder.com</span>? Pelajari dasar-dasar koding sambil bermain!
-      </p>
+        <p class="footer-text">
+            Baru di <span class="brand">BeeCoder</span>? Pelajari dasar-dasar koding sambil bermain!
+        </p>
     </div>
 
-    <!-- LANGUAGE TOGGLE BUTTON -->
     <button id="lang-toggle-btn" class="lang-btn">IND</button>
 
-    <script src="login_Rename.js"></script>
+    <script type="module" src="index-script.js"></script>
+    <script type="module" src="firebase-init.js"></script>
 
 </body>
 </html>

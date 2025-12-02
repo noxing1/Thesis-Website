@@ -1,14 +1,13 @@
 /* ============================================================
    GLOBAL STYLES
 ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Helvetica');
 
 body {
-  font-family: 'Comic Sans MS', sans-serif;
+  font-family: 'Inter', Helvetica, Arial, sans-serif;
   background-color: #212536;
+  color: white;
   margin: 0;
   padding: 0;
-  display: flex;
   height: 100vh;
   overflow: hidden;
   gap: 40px;
@@ -140,6 +139,29 @@ body.theme-sd .brand {
   text-shadow: 1px 1px 0 black;
 }
 
+/* Hover TK → Oranye terang */
+body.theme-tk-hover,
+body.theme-tk-hover .content-box,
+body.theme-tk-hover h1,
+body.theme-tk-hover h3,
+body.theme-tk-hover p,
+body.theme-tk-hover .or-text {
+  color: #2a1d00; /* gelap & readable */
+}
+
+
+
+
+/* Hover SD → Biru muda */
+body.theme-sd-hover,
+body.theme-sd-hover .content-box,
+body.theme-sd-hover h1,
+body.theme-sd-hover h3,
+body.theme-sd-hover p,
+body.theme-sd-hover .or-text {
+  color: #0f0f0f; /* hampir hitam, readable */
+}
+
 /* ============================================================
    LANGUAGE TOGGLE BUTTON
 ============================================================ */
@@ -176,4 +198,124 @@ body.theme-sd .lang-btn {
 /* Hover */
 .lang-btn:hover {
   transform: scale(1.07);
+}
+
+/* ============================================================
+   NEW HOVER THEMES
+============================================================ */
+
+/* Hover TK → Oranye terang */
+body.theme-tk-hover {
+  background-color: #f9d548;
+  color: #3a2a00;
+}
+
+body.theme-tk-hover .brand {
+  color: #a56a00;
+}
+
+body.theme-tk-hover button {
+  background-color: #ffe27c;
+  color: #3a2a00;
+}
+
+
+/* Hover SD → Biru muda */
+body.theme-sd-hover {
+  background-color: #cfe8ff;
+  color: #1a1a1a;
+}
+
+body.theme-sd-hover .brand {
+  color: #005bbb;
+}
+
+body.theme-sd-hover button {
+  background-color: white;
+  color: #003366;
+}
+
+body.login-mode {
+    background: linear-gradient(to bottom,
+        #f9d548 0%,
+        #ffeaa7 40%,
+        #cfe8ff 60%,
+        #8dc6ff 100%
+    );
+    transition: 1s ease;
+    display: none;
+}
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.40);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 5000;   /* pastikan paling atas */
+    transition: opacity .6s ease;
+}
+
+.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modal-window {
+    background: white;
+    width: 350px;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.3);
+    text-align: center;
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.modal-title {
+  color: black;
+}
+
+.modal-window input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    border-radius: 6px;
+    border: 1px solid #bbb;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.toggle {
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.error-msg {
+    color: red;
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+.small-text {
+    margin-top: 15px;
+    font-size: 13px;
+}
+
+.link {
+    color: #007bff;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Sembunyikan interface TK/SD saat login */
+.left-image,
+.content-box {
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity .7s ease, transform .7s ease;
 }

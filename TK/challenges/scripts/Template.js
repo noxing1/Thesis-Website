@@ -26,6 +26,29 @@ let cam = {
   lockOnBee: true
 };
 
+const MAP_LIST = [
+    "../Asset/Sprites/Maps/01.json",
+    "../Asset/Sprites/Maps/02.json",
+    "../Asset/Sprites/Maps/03.json",
+    "../Asset/Sprites/Maps/04.json",
+    "../Asset/Sprites/Maps/05.json",
+    "../Asset/Sprites/Maps/06.json",
+    "../Asset/Sprites/Maps/07.json",
+    "../Asset/Sprites/Maps/08.json",
+    "../Asset/Sprites/Maps/09.json",
+    "../Asset/Sprites/Maps/10.json"
+];
+
+// ===========================================
+//  LOAD SELECTED MAP INDEX FROM LOCALSTORAGE
+// ===========================================
+let selectedMap = parseInt(localStorage.getItem("selectedMap") || "0");
+
+// Safety clamp: pastikan tidak out-of-range
+if (selectedMap < 0 || selectedMap >= MAP_LIST.length) {
+    selectedMap = 0;
+}
+
 // ------------------------
 // LOAD IMAGES
 // ------------------------
@@ -316,10 +339,10 @@ function drawTileFromTileset(gid, worldX, worldY) {
 // ------------------------
 let mapData = null;
 
-async function loadMap() {
-  const res = await fetch("../Asset/Sprites/Background-easy-walk.json");
-  mapData = await res.json();
-  console.log("MAP LOADED", mapData);
+async function loadMap(index = 0) {
+    const res = await fetch(MAP_LIST[index]);
+    mapData = await res.json();
+    console.log("MAP LOADED:", MAP_LIST[index]);
 }
 
 function loadEnemySpawn() {
@@ -437,10 +460,24 @@ function checkProjectileHitEnemy(p) {
 }
 
 Promise.all([
-    loadMap(),
+    loadMap(selectedMap),
     loadBee(),
     loadButterflies()
 ]).then(() => {
+
+    // 🔍 Cek apakah map memiliki musuh
+    const hasEnemyLayer = mapData.layers.some(
+        layer => layer.type === "objectgroup" && layer.name === "Enemy"
+    );
+
+    // 🔫 Hide/Show tombol tembak
+    const btnShoot = document.getElementById("btn-tembak");
+    if (hasEnemyLayer) {
+        btnShoot.style.display = "flex";
+    } else {
+        btnShoot.style.display = "none";
+    }
+
 
     // pastikan semua anim lengkap dulu sebelum spawn musuh
     loadEnemySpawn();  
@@ -695,15 +732,16 @@ function resetBee() {
   bee.state = "idle";
   bee.frame = 0;
 
-  // Tidak langsung jalan; user harus tekan run lagi
-  isRunningCommands = false;
+  // RESET MUSUH JUGA
+  enemies = [];
+  loadEnemySpawn();
 
-  // Jangan jalankan commandQueue otomatis
+  isRunningCommands = false;
 }
+
 
 document.getElementById("btn-reset-manual").onclick = () => {
   resetBee();
-  document.querySelector(".title").innerText = "PERGI KE BUNGA!";
 };
 
 function previewTiles() {
@@ -1013,6 +1051,11 @@ document.getElementById("btn-run").onclick = () => {
 
     // Kembalikan lebah ke lokasi spawn SETIAP RUN ditekan
     findBeeSpawn();
+    
+    // RESET MUSUH SETIAP RUN
+    enemies = [];
+    loadEnemySpawn();
+
 
     // Bangun ulang command queue
     commandQueue = [];
@@ -1419,4 +1462,28 @@ function getLocalizedBlockText(type, dir = null) {
         const arrow = {up:"🡱", right:"🡲", left:"🡸", down:"🡳"}[dir];
         return arrow;
     }
+}
+
+function manageIntroPopup(currentMap) {
+    const popup = document.getElementById("intro-popup");
+    const arrow = document.querySelector(".intro-arrow");
+
+    if (!popup) return;
+
+    // Map 01 → muncul 🡲
+    if (currentMap === 0) {
+        popup.style.display = "flex";
+        arrow.textContent = "🡲";
+        return;
+    }
+
+    // Map 03 → muncul 🔫
+    if (currentMap === 2) {
+        popup.style.display = "flex";
+        arrow.textContent = "🔫";
+        return;
+    }
+
+    // Map lainnya → hide
+    popup.style.display = "none";
 }

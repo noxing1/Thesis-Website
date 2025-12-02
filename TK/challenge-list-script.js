@@ -1,3 +1,32 @@
+
+const CHALLENGE_TEXT = {
+    id: [
+        { title: "Lebah Pertamamu!", tags: "[mudah] [movement]" },
+        { title: "Langkah Pertama", tags: "[mudah] [movement]" },
+        { title: "Panah Arah", tags: "[mudah] [navigation]" },
+        { title: "Belok Kanan", tags: "[sedang] [movement]" },
+        { title: "Belok Kiri", tags: "[sedang] [movement]" },
+        { title: "Jalan Lurus Jauh", tags: "[sedang] [route]" },
+        { title: "Rute Zig-Zag", tags: "[sulit] [path]" },
+        { title: "Hindari Dua Kupu-kupu", tags: "[sulit] [enemy]" },
+        { title: "Rute Panjang & Musuh", tags: "[sulit] [enemy] [path]" },
+        { title: "Labirin Mini Lebah", tags: "[sulit] [logic]" }
+    ],
+
+    en: [
+        { title: "Your First Bee!", tags: "[easy] [movement]" },
+        { title: "First Steps", tags: "[easy] [movement]" },
+        { title: "Direction Arrows", tags: "[easy] [navigation]" },
+        { title: "Turn Right", tags: "[medium] [movement]" },
+        { title: "Turn Left", tags: "[medium] [movement]" },
+        { title: "Long Straight Path", tags: "[medium] [route]" },
+        { title: "Zig-Zag Route", tags: "[hard] [path]" },
+        { title: "Avoid Two Butterflies", tags: "[hard] [enemy]" },
+        { title: "Long Route & Enemy", tags: "[hard] [enemy] [path]" },
+        { title: "Mini Bee Maze", tags: "[hard] [logic]" }
+    ]
+};
+
 /* ============================================================
    CLOCK (DIGITAL CLOCK WITH ANIMATION)
 ============================================================ */
@@ -53,8 +82,20 @@ langBtn.onclick = () => {
   updateLangButton();
 };
 
+function setLanguage(lang) {
+    currentLanguage = lang;
+    localStorage.setItem("lang", lang);
+    applyLanguage(lang);
+    updateLangButton();
+}
+
 function updateLangButton() {
-  langBtn.textContent = (currentLanguage === "id") ? "IND" : "ENG";
+    const btn = document.getElementById("lang-toggle-btn");
+    if (btn) btn.textContent = (currentLanguage === "id") ? "IND" : "ENG";
+}
+
+function text(el, value) {
+    if (el) el.textContent = value;
 }
 
 /* ============================================================
@@ -63,61 +104,68 @@ function updateLangButton() {
 
 function applyLanguage(lang) {
 
-  if (lang === "id") {
-    document.getElementById("challenge-subtitle").textContent = "Pilih tantangan coding yang sesuai tingkat kemampuanmu.";
-    document.getElementById("progress-title").textContent = "Progresmu!";
-    document.getElementById("user-label").textContent = "Pengguna:";
-    document.getElementById("xp-label").textContent = "XP:";
-    document.getElementById("btn-best-text").textContent = "Mulai Tantangan Terbaik";
-    document.getElementById("challenge-title").textContent = "Tantangan";
+    const L = {
+        en: {
+            // CHALLENGE LIST PAGE
+            progress_title: "Your Progress!",
+            challenge_subtitle: "Choose a coding challenge that matches your skill level.",
+            challenge_title: "Challenges",
+            filter_text: "Difficulty Filter",
+            filter_all: "All",
+            filter_easy: "Easy",
+            filter_medium: "Medium",
+            filter_hard: "Hard",
+            user_label: "User:",
+            xp_label: "XP:",
+            btn_best: "Start Best Challenge",
+        },
 
-    document.getElementById("filter-text").textContent = "Filter Kesulitan";
-    document.getElementById("filter-all").textContent = "Semua";
-    document.getElementById("filter-easy").textContent = "Mudah";
-    document.getElementById("filter-medium").textContent = "Sedang";
-    document.getElementById("filter-hard").textContent = "Sulit";
+        id: {
+            // CHALLENGE LIST PAGE
+            progress_title: "Progresmu!",
+            challenge_subtitle: "Pilih tantangan coding yang sesuai tingkat kemampuanmu.",
+            challenge_title: "Tantangan",
+            filter_text: "Filter Kesulitan",
+            filter_all: "Semua",
+            filter_easy: "Mudah",
+            filter_medium: "Sedang",
+            filter_hard: "Sulit",
+            user_label: "Pengguna:",
+            xp_label: "XP:",
+            btn_best: "Mulai Tantangan Terbaik",
+        }
+    };
 
-    // Nama Tantangan
-    document.querySelector(".cl-1-title").textContent = "Mulailah Berbicara!";
-    document.querySelector(".cl-2-title").textContent = "Gerakkan Karakter";
-    document.querySelector(".cl-3-title").textContent = "Loop Warna-warni";
-    document.querySelector(".cl-4-title").textContent = "Menebak Angka";
+    const T = L[lang];
 
-    // Tags
-    document.querySelector(".cl-1-tags").textContent = "[mudah] [printing]";
-    document.querySelector(".cl-2-tags").textContent = "[mudah] [movement]";
-    document.querySelector(".cl-3-tags").textContent = "[sedang] [loop]";
-    document.querySelector(".cl-4-tags").textContent = "[sulit] [if/else]";
+    /* -------------------------
+       CHALLENGE LIST PAGE
+    ------------------------- */
+    text(document.getElementById("progress-title"), T.progress_title);
+    text(document.getElementById("challenge-subtitle"), T.challenge_subtitle);
+    text(document.getElementById("challenge-title"), T.challenge_title);
 
-  } else {
-    document.getElementById("challenge-subtitle").textContent ="Choose a coding challenge that matches your skill level.";
+    text(document.getElementById("filter-text"), T.filter_text);
+    text(document.getElementById("filter-all"), T.filter_all);
+    text(document.getElementById("filter-easy"), T.filter_easy);
+    text(document.getElementById("filter-medium"), T.filter_medium);
+    text(document.getElementById("filter-hard"), T.filter_hard);
 
-    // Challenge Names
-    document.querySelector(".cl-1-title").textContent = "Start Speaking!";
-    document.querySelector(".cl-2-title").textContent = "Move the Character";
-    document.querySelector(".cl-3-title").textContent = "Colorful Loop";
-    document.querySelector(".cl-4-title").textContent = "Number Guessing";
+    text(document.getElementById("user-label"), T.user_label);
+    text(document.getElementById("xp-label"), T.xp_label);
+    text(document.getElementById("btn-best-text"), T.btn_best);
+    
+    document.querySelectorAll(".challenge-box").forEach(box => {
+        const cid = parseInt(box.dataset.id);
+        const titleEl = box.querySelector(".cl-title");
+        const tagEl = box.querySelector(".cl-tags");
 
-    // Tags
-    document.querySelector(".cl-1-tags").textContent = "[easy] [printing]";
-    document.querySelector(".cl-2-tags").textContent = "[easy] [movement]";
-    document.querySelector(".cl-3-tags").textContent = "[medium] [loop]";
-    document.querySelector(".cl-4-tags").textContent = "[hard] [if/else]";
-
-    document.getElementById("progress-title").textContent = "Your Progress!";
-    document.getElementById("user-label").textContent = "User:";
-    document.getElementById("xp-label").textContent = "XP:";
-    document.getElementById("btn-best-text").textContent = "Start Best Challenge";
-    document.getElementById("challenge-title").textContent = "Challenges";
-
-    document.getElementById("filter-text").textContent = "Difficulty Filter";
-    document.getElementById("filter-all").textContent = "All";
-    document.getElementById("filter-easy").textContent = "Easy";
-    document.getElementById("filter-medium").textContent = "Medium";
-    document.getElementById("filter-hard").textContent = "Hard";
-  }
+        if (CHALLENGE_TEXT[lang][cid]) {
+            titleEl.textContent = CHALLENGE_TEXT[lang][cid].title;
+            tagEl.textContent = CHALLENGE_TEXT[lang][cid].tags;
+        }
+    });
 }
-
 
 /* ============================================================
    FILTER CHALLENGES
@@ -138,23 +186,19 @@ radioButtons.forEach(radio => {
   });
 });
 
-
-/* ============================================================
-   BEST CHALLENGE BUTTON
-============================================================ */
-
-document.getElementById("btn-best").onclick = () => {
-  window.location.href = "challenge-placeholder/challenge-placeholder.html";
-};
-
 /* ============================================================
    BUTTON ACTIONS (GO TO NEXT PAGE)
 ============================================================ */
 
 document.getElementById("btn-best").onclick = () => {
-  window.location.href = "challenges/easy-text.html";
+  window.location.href = "challenges/gameplay.html";
 };
 
-document.querySelector(".cl-1-title").parentElement.onclick = () => {
-  window.location.href = "challenges/easy-text.html";
-};
+document.querySelectorAll(".challenge-box").forEach(box => {
+    box.addEventListener("click", () => {
+        const id = parseInt(box.getAttribute("data-map"));
+        localStorage.setItem("selectedMap", id);
+
+        window.location.href = "challenges/gameplay.html";
+    });
+});

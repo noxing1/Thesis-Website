@@ -2,13 +2,17 @@
    GLOBAL
 ========================================= */
 :root {
-  --tk-bg: #f8d24b;          /* Background kuning */
-  --tk-panel: #ffeb8a;       /* Panel lembut */
-  --tk-panel-dark: #ffeab2;  /* Panel item */
-  --tk-brown: #4b3300;       /* Teks coklat */
+  --tk-bg: #f8d24b;
+  --tk-panel: #ffeb8a;
+  --tk-panel-dark: #ffeab2;
+  --tk-brown: #4b3300;
   --tk-border: rgba(0,0,0,0.25);
   --tk-shadow: rgba(0,0,0,0.22);
   --tk-slot: rgba(255,255,255,0.45);
+  /* Function Block Color */
+  --tk-function-main: #34d399; /* Green 400 */
+  --tk-function-border: #069c6f; /* Green 700 */
+  --tk-function-text: #064e3b; /* Green 900 */
 }
 
 body {
@@ -37,7 +41,8 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 15px;
-  z-index: 1000;
+  /* Z-index 999 */
+  z-index: 999; 
   box-shadow: 0 3px 10px rgba(0,0,0,0.4);
 }
 
@@ -51,11 +56,8 @@ body {
   transform: translateX(-50%) scale(1.415);
   transform-origin: top center;
   
-  /* HAPUS definisi width & height paksa */
   width: auto;
   height: auto;
-
-  /* Agar tetap responsif tanpa mengubah aspect ratio */
   max-width: 90vw;
   max-height: calc(100vh - 250px);
 
@@ -71,50 +73,53 @@ body {
 .bottom-panel {
   position: fixed;
   bottom: 0;
-  width: 100%;
+  /* Lebar disesuaikan agar hanya menampung toolbar kiri */
+  width: 50%;
+  left: 0;
   height: 190px;
   background: var(--tk-panel);
-  backdrop-filter: none;
   display: flex;
   padding: 15px;
   gap: 10px;
-  z-index: 999;
+  /* Dibiarkan tinggi (1001) agar di atas header. */
+  z-index: 1001; 
   border-top: 2px solid var(--tk-border);
   box-shadow: 0 -4px 10px var(--tk-shadow);
+  /* Agar bubble yang muncul ke atas tidak terpotong panel */
+  overflow: visible !important; 
 }
 
 /* =========================================
    TOOLBAR AREA 50%
 ========================================= */
-
 .toolbar-buttons {
   display: flex;
   flex-direction: row;
   gap: 12px;
-  justify-content: center;    /* ← new */
-  align-items: center;        /* ← new */
-  width: 100%;                /* agar benar-benar center */
+  justify-content: center;
+  align-items: center;
+  width: 100%;
 }
 
 .toolbar-area {
   flex: 1;
-  min-width: 50%;     /* ← memastikan 50% */
+  min-width: 100%; /* Agar toolbar mengambil seluruh lebar bottom-panel (50%) */
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
+  /* Z-index 1000 */
+  z-index: 1000;
 }
 
 .toolbar-area h3 {
-  margin: 13px 0 10px 0;  /* turun sedikit */
+  margin: 13px 0 10px 0;
   color: var(--tk-brown);
   width: 100%;
-  text-align: left;    /* kembali ke kiri */
+  text-align: left;
   padding-left: 5px;
 }
 
-
-/* Kotak tombol utama */
 .toolbar-btn {
   width: 70px;
   height: 70px;
@@ -140,7 +145,7 @@ body {
 }
 
 /* =========================================
-   DROPUP
+   DROPUP (Toolbar Flyout)
 ========================================= */
 .dropup {
   position: absolute;
@@ -162,7 +167,7 @@ body {
   padding: 8px;
   border-radius: 8px;
   cursor: grab;
-  font-size: 38px;
+  font-size: 40px;
   color: var(--tk-brown);
   line-height: 32px;
 }
@@ -172,17 +177,41 @@ body {
 }
 
 /* =========================================
+   WORKSPACE CONTAINER (BARU)
+========================================= */
+.workspace-area-wrapper {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 50%;
+  height: 190px;
+  background: var(--tk-panel); /* Berikan background kuning yang sama */
+  padding: 15px;
+  gap: 10px;
+  display: flex; /* Untuk menampung workspace-area */
+  z-index: 1002; /* Lebih tinggi dari bottom-panel (1001) */
+  border-top: 2px solid var(--tk-border);
+  box-shadow: 0 -4px 10px var(--tk-shadow);
+}
+
+/* =========================================
    WORKSPACE 50%
 ========================================= */
 .workspace-area {
   flex: 1;
-  min-width: 50%;
+  min-width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  overflow-x: auto;     /* ← WAJIB: aktifkan scroll horizontal */
-  overflow-y: hidden;   /* opsional: agar tidak ada scroll vertikal */
+  
+  /* PENTING: visible agar bubble loop yang "nongol" ke atas tidak terpotong */
+  overflow-y: visible; 
+  overflow-x: auto; /* Tetap bisa scroll samping */
+  
   position: relative;
+  /* Z-index ini harus tinggi di dalam wrapper */
+  z-index: 10000; 
+  padding-right: 15px; /* Sesuaikan padding */
 }
 
 .btn-reset-workspace {
@@ -197,7 +226,7 @@ body {
   border-radius: 8px;
   cursor: pointer;
   box-shadow: 0 3px 5px rgba(0,0,0,0.25);
-  z-index: 10;
+  z-index: 10001; /* Z-index sangat tinggi agar di atas wrapper */
 }
 
 .btn-reset-workspace:hover {
@@ -207,10 +236,10 @@ body {
 .workspace-scroll {
   display: flex;
   gap: 12px;
-  min-width: max-content;   /* ← WAJIB: agar konten bisa melebar */
-  padding-bottom: 10px;     /* agar shadow block tidak kepotong */
+  min-width: max-content;
+  padding-bottom: 10px;
+  padding-top: 10px; /* Sedikit ruang agar shadow/highlight di atas aman */
 }
-
 
 .workspace-area h3 {
   color: var(--tk-brown);
@@ -229,6 +258,10 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative; 
+  /* Z-index harus cukup tinggi tapi di bawah elemen yang sedang di-drag */
+  z-index: 10; 
+  overflow: visible; /* PENTING: Agar anak elemen (bubble) terlihat keluar */
 }
 
 .slot.highlight {
@@ -241,7 +274,7 @@ body {
    BLOCK (KOTAK)
 ========================================= */
 .block {
-  background: var(--tk-panel-dark);     /* warna kotaknya */
+  background: var(--tk-panel-dark);
   border: 2px solid var(--tk-brown);
   border-radius: 10px;
   box-shadow: 0 3px 5px var(--tk-shadow);
@@ -258,28 +291,262 @@ body {
   font-size: 38px;
 }
 
+/* --- FUNCTION BLOCK CUSTOM --- */
+.block[data-type="function"] {
+    background-color: var(--tk-function-main);
+    color: var(--tk-function-text);
+    border: 2px solid var(--tk-function-border);
+    font-size: 18px; /* Ukuran teks untuk 'Function: {}' */
+    font-weight: bold;
+    line-height: 1.2;
+    padding: 2px;
+}
+
+.function-label {
+    font-size: 40px;
+    margin-top: 0;
+}
+
+.function-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    font-size: 12px;
+    font-weight: normal;
+}
+
+.function-icon-container {
+    display: flex;
+    gap: 1px;
+    align-items: center;
+    justify-content: center;
+    height: 30px;
+}
+
+/* --- FUNCTION DEFINITION BUBBLE (DI TOOLBAR) --- */
+.function-dropup {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px; 
+    background-color: var(--tk-panel-dark); 
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 10002; 
+    padding: 10px;
+    display: none; 
+    flex-direction: column;
+    align-items: center;
+    border: 2px solid var(--tk-function-border);
+}
+
+.function-dropup::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid var(--tk-panel-dark);
+}
+
+.function-slot-container {
+    display: flex;
+    flex-direction: row; 
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+.function-dropup .slot {
+    width: 80px;
+    height: 80px;
+    background-color: var(--tk-slot); 
+    border: 2px dashed var(--tk-function-border);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s;
+    z-index: 5010;
+}
+
+.function-dropup .slot.highlight {
+    border-color: var(--tk-function-border);
+    background-color: #f7fee7; /* Warna highlight terang */
+}
+
+/* Function Toggle Button (di Toolbar) */
+.function-toggle-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: var(--tk-function-main);
+    color: var(--tk-function-text);
+    border: 1px solid var(--tk-function-border);
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    z-index: 20;
+}
+/* --- END FUNCTION BLOCK CUSTOM --- */
+
+/* --- LOOP BLOCK CUSTOM --- */
+.block[data-type="loop"] {
+    background-color: #5d5dff;
+    color: white;
+    border: 2px solid #3a3ad0;
+    padding: 0; 
+    font-size: 24px;
+    cursor: grab;
+    position: relative; 
+}
+
+.loop-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loop-counter {
+    background: white;
+    color: #5d5dff;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 5px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.1s;
+}
+
+.loop-counter:hover {
+    background: #e0e0e0;
+}
+
+/* Container Bubble Loop */
+.loop-dropup {
+    position: absolute;
+    top: -100px; 
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px; 
+    
+    background-color: var(--tk-panel-dark); 
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 10002; 
+    padding: 10px;
+    display: none; 
+    flex-direction: column;
+    align-items: center;
+    border: 2px solid var(--tk-brown);
+}
+
+.loop-dropup::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid var(--tk-panel-dark);
+}
+
+.loop-slot-container {
+    display: flex;
+    flex-direction: row; 
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+.loop-dropup .slot {
+    width: 80px;
+    height: 80px;
+    background-color: var(--tk-slot); 
+    border: 2px dashed var(--tk-brown);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s;
+    z-index: 5010;
+}
+
+.loop-dropup .slot.highlight {
+    border-color: #5d5dff;
+    background-color: #ffe999; 
+}
+
+/* Memastikan block di dalam slot nested berada di atas background slot */
+.loop-dropup .slot .block {
+    position: relative; 
+    z-index: 5011; 
+}
+
+/* Loop Toggle Button */
+.loop-toggle-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #5d5dff;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    z-index: 20; 
+}
+/* --- END LOOP BLOCK CUSTOM --- */
+
+
 .drag-shadow {
-  background: var(--tk-panel-dark);     /* tetap berwarna */
+  background: var(--tk-panel-dark);
   border: 2px solid var(--tk-brown);
   font-size: 38px;
   line-height: 38px;
+  /* Z-index sangat tinggi agar selalu terlihat saat di-drag */
+  z-index: 10003; 
 }
 
 
-.win-box {
-  position: absolute;
-  top: 30%;
-  left: 40%;
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
-}
-
+/* =============================
+   UTILITY & OVERLAYS
+============================= */
 .btn-reset-manual {
   position: fixed;
-  top: 70px;                   /* sedikit di bawah navbar */
-  right: 20px;                 /* pojok kanan canvas */
+  top: 70px;
+  right: 20px;
   background: #ffeab2;
   border: 2px solid var(--tk-brown);
   color: var(--tk-brown);
@@ -299,7 +566,7 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.55);
-  display: none;                  /* default hidden */
+  display: none;
   justify-content: center;
   align-items: center;
   z-index: 2000;
@@ -336,9 +603,7 @@ body {
   background: #ffee4e;
 }
 
-/* =============================
-   INTRO POPUP
-============================= */
+/* INTRO POPUP */
 #intro-popup {
   position: fixed;
   inset: 0;
@@ -356,10 +621,10 @@ body {
   border-radius: 18px;
   padding: 25px 35px;
   display: flex;
-  flex-direction: row;       /* ← HORIZONTAL */
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 40px;                 /* ← jarak antar item */
+  gap: 40px;
 }
 
 #intro-bee-canvas {
@@ -385,8 +650,6 @@ body {
   justify-content: center;
   gap: 6px;
   margin: 15px 0 25px 0;
-
-  /* container TIDAK fade */
   opacity: 1;
 }
 
@@ -397,7 +660,7 @@ body {
 }
 
 .honey-icon {
-  height: 60px;         /* biarkan width mengikuti rasio */
+  height: 60px;
   image-rendering: pixelated;
 }
 

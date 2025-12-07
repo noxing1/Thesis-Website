@@ -13,6 +13,8 @@ body {
   gap: 40px;
   line-height: 1.4;
 
+  display: flex;
+
   /* Transition diperhalus & diperlambat */
   transition: background-color 0.9s ease, color 0.9s ease;
 }
@@ -182,6 +184,8 @@ body.theme-sd-hover .or-text {
   box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
 
   transition: 0.25s;
+
+  z-index: 7000;
 }
 
 /* Warna tombol mengikuti tema */
@@ -243,7 +247,6 @@ body.login-mode {
         #8dc6ff 100%
     );
     transition: 1s ease;
-    display: none;
 }
 
 .overlay {
@@ -254,23 +257,20 @@ body.login-mode {
     justify-content: center;
     align-items: center;
     z-index: 5000;   /* pastikan paling atas */
-    transition: opacity .6s ease;
+    transition: opacity .6s ease, visibility 0s linear .6s; /* Tambah visibility */
+    visibility: visible;
+}
+
+/* KETIKA body.login-mode HILANG, overlay akan fade out */
+.overlay.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .6s ease, visibility 0s linear .6s; 
 }
 
 .hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-
-.modal-window {
-    background: white;
-    width: 350px;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 10px 35px rgba(0,0,0,0.3);
-    text-align: center;
-    transform: translateY(0);
-    opacity: 1;
+  /* class ini sekarang hanya akan digunakan di JS untuk login-overlay agar sembunyi sepenuhnya setelah transisi */
+  display: none;
 }
 
 .modal-title {
@@ -278,9 +278,10 @@ body.login-mode {
 }
 
 .modal-window input {
-    width: 100%;
+    width: 100%;               /* full but safe */
+    max-width: 100%;
     padding: 10px;
-    margin-top: 8px;
+    margin-top: 10px;
     border-radius: 6px;
     border: 1px solid #bbb;
     font-size: 14px;
@@ -288,11 +289,18 @@ body.login-mode {
 }
 
 .toggle {
-    margin-top: 6px;
+    margin-top: 10px;
     display: flex;
+    justify-content: flex-start;  /* kiri */
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     font-size: 13px;
+    color: black;
+}
+
+.toggle input {
+    width: 16px;
+    height: 16px;
 }
 
 .error-msg {
@@ -302,20 +310,144 @@ body.login-mode {
 }
 
 .small-text {
-    margin-top: 15px;
     font-size: 13px;
+    margin-top: 15px;
+    color: black;
 }
 
 .link {
     color: #007bff;
-    text-decoration: underline;
     cursor: pointer;
+    text-decoration: underline;
 }
 
-/* Sembunyikan interface TK/SD saat login */
+/* Sembunyikan interface TK/SD saat body memiliki kelas 'login-mode' */
+body.login-mode .left-image,
+body.login-mode .content-box {
+  opacity: 0;
+  /* Pindahkan agar lebih terlihat transisinya */
+  transform: translateX(40px); 
+  transition: opacity .7s ease, transform .7s ease;
+}
+
+/* Tampilkan interface TK/SD setelah login (keadaan default) */
 .left-image,
 .content-box {
+  opacity: 1; /* Nilai default yang seharusnya */
+  transform: translateX(0); /* Nilai default yang seharusnya */
+  transition: opacity .7s ease, transform .7s ease;
+}
+
+/* Posisi default semua modal → center */
+.modal-window {
+    background: white;
+    width: 340px;
+    padding: 25px 22px;
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+    text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 1;
+    transition: opacity .45s ease, transform .45s ease;
+    z-index: 6000;
+}
+
+/* Login → naik ke atas saat hilang */
+.modal-window.slide-up {
+    transform: translate(-50%, -70%);
     opacity: 0;
-    transform: translateX(40px);
-    transition: opacity .7s ease, transform .7s ease;
+}
+
+/* Create → muncul dari bawah saat tampil */
+.modal-window.slide-up-reverse {
+    transform: translate(-50%, -30%);
+    opacity: 0;
+}
+
+.modal-window.active {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+}
+
+#login-window {
+    z-index: 6000;
+}
+
+#create-window {
+    z-index: 6001;
+}
+
+.modal-window button {
+    width: 100%;
+    margin-top: 15px;
+    padding: 10px 0;
+    border-radius: 7px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #fcd34d;
+    border: none;
+    transition: .2s;
+}
+
+.modal-window button:hover {
+    background-color: #ffd966;
+}
+
+/* ============================================================
+   NEXT BUTTON (pojok kanan atas)
+============================================================ */
+.next-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+
+    background: #fcd34d;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.next-btn:hover {
+    transform: scale(1.07);
+    background: #ffe27c;
+}
+
+#next-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+
+    width: 90px; /* override tombol besar */
+    padding: 6px 10px;
+    border-radius: 6px;
+
+    background: #fcd34d;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 9999;
+}
+
+#next-btn:hover {
+    background: #ffd966;
+}
+
+/* ============================================================
+   SLIDE-IN ANIMATIONS
+============================================================ */
+.slide-in-left {
+    opacity: 1 !important;
+    transform: translateX(0) !important;
+}
+
+.slide-in-right {
+    opacity: 1 !important;
+    transform: translateX(0) !important;
 }

@@ -21,8 +21,6 @@
   </div>
 
 
-
-
   <canvas id="game"></canvas>
 
   <button id="btn-reset-manual" class="btn-reset-manual">Restart?</button>
@@ -51,31 +49,70 @@
             </div>
           </div>
 
+          <div class="toolbar-btn" id="btn-loop">
+            <span class="block-label">🔁</span>
+            <div class="dropup" id="dropup-loop">
+              <div class="drop-item" data-type="loop" data-dir="default">1</div>
+            </div>
+          </div>
+
+          <div class="toolbar-btn" id="btn-if-else">
+            <span class="block-label">2</span>
+            <div class="dropup" id="dropup-if-else">
+              <div class="drop-item" data-type="if-else" data-dir="default">1</div>
+            </div>
+          </div>
+
+          <!-- FUNCTION BLOCK DENGAN TOGGLE DAN DEFINITION BUBBLE -->
+          <div class="toolbar-btn" id="btn-function">
+            <span class="block-label function-label">{}</span>
+            
+            <!-- Tombol Toggle Function Definition (di render ulang via JS) -->
+            <div class="function-toggle-btn" id="function-toggle-btn-toolbar">▼</div>
+
+            <!-- Function Definition Bubble - Selalu di toolbar, dibuka/ditutup via JS -->
+            <div class="function-dropup" id="function-definition-bubble">
+              <div class="function-slot-container">
+                  <div class="slot function-nested-slot" data-index="0"></div>
+                  <div class="slot function-nested-slot" data-index="1"></div>
+              </div>
+            </div>
+
+            <div class="dropup" id="dropup-function">
+              <div class="drop-item" data-type="function" data-dir="default">{}</div>
+            </div>
+          </div>
+          <!-- END FUNCTION BLOCK -->
+
         </div>
     </div>
 
 
-    <!-- WORKSPACE kanan -->
-    <div class="workspace-area">
-
-      <button id="btn-reset-workspace" class="btn-reset-workspace">↺ Clear</button>
-
-      <h3 id="title-workspace">Workspace</h3>
-      <div id="slots" class="workspace-scroll">
-        <div class="slot"></div>
-        <div class="slot"></div>
-        <div class="slot"></div>
-        <div class="slot"></div>
-        <div class="slot"></div>
-        <div class="slot"></div>
-        <div class="slot"></div>
-        <div class="slot"></div>
-        <div class="slot"></div>
-        <div class="slot"></div>
-      </div>
-    </div>
-
+    <!-- WORKSPACE kanan - KOSONGKAN DARI SINI -->
   </div>
+    
+  <!-- WORKSPACE BARU: Pindah ke luar bottom-panel untuk mengontrol stacking secara global -->
+  <div class="workspace-area-wrapper">
+      <div class="workspace-area">
+
+        <button id="btn-reset-workspace" class="btn-reset-workspace">↺ Clear</button>
+
+        <h3 id="title-workspace">Area Kerja</h3>
+        <div id="slots" class="workspace-scroll">
+          <div class="slot"></div>
+          <div class="slot"></div>
+          <div class="slot"></div>
+          <div class="slot"></div>
+          <div class="slot"></div>
+          <div class="slot"></div>
+          <div class="slot"></div>
+          <div class="slot"></div>
+          <div class="slot"></div>
+          <div class="slot"></div>
+        </div>
+      </div>
+  </div>
+
 
   <div id="win-overlay" class="win-overlay">
     <div class="win-popup">
@@ -96,18 +133,6 @@
       <img src="../Asset/flower-demo.png" class="intro-flower">
     </div>
   </div>
-  <!-- 
-  <script src="scripts/config.js"></script>
-  <script src="scripts/loaders.js"></script>
-  <script src="scripts/engine-map.js"></script>
-  <script src="scripts/engine-bee.js"></script>
-  <script src="scripts/engine-enemy.js"></script>
-  <script src="scripts/engine-projectile.js"></script>
-  <script src="scripts/camera.js"></script>
-  <script src="scripts/workspace.js"></script>
-  <script src="scripts/language.js"></script>
-  <script src="scripts/main.js"></script> 
-  -->
 
   <script src="scripts/Template.js"></script> 
   </body>

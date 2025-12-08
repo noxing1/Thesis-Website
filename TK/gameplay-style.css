@@ -13,6 +13,11 @@
   --tk-function-main: #34d399; /* Green 400 */
   --tk-function-border: #069c6f; /* Green 700 */
   --tk-function-text: #064e3b; /* Green 900 */
+  
+  /* Conditional Block Color (NEW: Orange/Red) */
+  --tk-cond-main: #ff9933; /* Bright Orange */
+  --tk-cond-border: #cc7a00; /* Darker Orange */
+  --tk-cond-text: white;
 }
 
 body {
@@ -36,12 +41,12 @@ body {
   top: 0;
   width: 100%;
   height: 60px;
-  background: var(--tk-blue-dark);
+  /* Warning: tk-blue-dark tidak didefinisikan, menggunakan tk-panel untuk keamanan */
+  background: var(--tk-panel);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 15px;
-  /* Z-index 999 */
   z-index: 999; 
   box-shadow: 0 3px 10px rgba(0,0,0,0.4);
 }
@@ -73,7 +78,6 @@ body {
 .bottom-panel {
   position: fixed;
   bottom: 0;
-  /* Lebar disesuaikan agar hanya menampung toolbar kiri */
   width: 50%;
   left: 0;
   height: 190px;
@@ -81,11 +85,9 @@ body {
   display: flex;
   padding: 15px;
   gap: 10px;
-  /* Dibiarkan tinggi (1001) agar di atas header. */
   z-index: 1001; 
   border-top: 2px solid var(--tk-border);
   box-shadow: 0 -4px 10px var(--tk-shadow);
-  /* Agar bubble yang muncul ke atas tidak terpotong panel */
   overflow: visible !important; 
 }
 
@@ -103,12 +105,11 @@ body {
 
 .toolbar-area {
   flex: 1;
-  min-width: 100%; /* Agar toolbar mengambil seluruh lebar bottom-panel (50%) */
+  min-width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  /* Z-index 1000 */
   z-index: 1000;
 }
 
@@ -185,11 +186,11 @@ body {
   right: 0;
   width: 50%;
   height: 190px;
-  background: var(--tk-panel); /* Berikan background kuning yang sama */
+  background: var(--tk-panel);
   padding: 15px;
   gap: 10px;
-  display: flex; /* Untuk menampung workspace-area */
-  z-index: 1002; /* Lebih tinggi dari bottom-panel (1001) */
+  display: flex;
+  z-index: 1002;
   border-top: 2px solid var(--tk-border);
   box-shadow: 0 -4px 10px var(--tk-shadow);
 }
@@ -204,14 +205,12 @@ body {
   flex-direction: column;
   justify-content: center;
   
-  /* PENTING: visible agar bubble loop yang "nongol" ke atas tidak terpotong */
   overflow-y: visible; 
-  overflow-x: auto; /* Tetap bisa scroll samping */
+  overflow-x: auto;
   
   position: relative;
-  /* Z-index ini harus tinggi di dalam wrapper */
   z-index: 10000; 
-  padding-right: 15px; /* Sesuaikan padding */
+  padding-right: 15px;
 }
 
 .btn-reset-workspace {
@@ -226,7 +225,7 @@ body {
   border-radius: 8px;
   cursor: pointer;
   box-shadow: 0 3px 5px rgba(0,0,0,0.25);
-  z-index: 10001; /* Z-index sangat tinggi agar di atas wrapper */
+  z-index: 10001;
 }
 
 .btn-reset-workspace:hover {
@@ -238,7 +237,7 @@ body {
   gap: 12px;
   min-width: max-content;
   padding-bottom: 10px;
-  padding-top: 10px; /* Sedikit ruang agar shadow/highlight di atas aman */
+  padding-top: 10px;
 }
 
 .workspace-area h3 {
@@ -259,9 +258,8 @@ body {
   justify-content: center;
   align-items: center;
   position: relative; 
-  /* Z-index harus cukup tinggi tapi di bawah elemen yang sedang di-drag */
   z-index: 10; 
-  overflow: visible; /* PENTING: Agar anak elemen (bubble) terlihat keluar */
+  overflow: visible;
 }
 
 .slot.highlight {
@@ -293,173 +291,281 @@ body {
 
 /* --- FUNCTION BLOCK CUSTOM --- */
 .block[data-type="function"] {
-    background-color: var(--tk-function-main);
-    color: var(--tk-function-text);
-    border: 2px solid var(--tk-function-border);
-    /* Ukuran disesuaikan untuk tampilan default besar */
-    font-size: 40px; 
-    font-weight: bold;
-    line-height: 1.2;
-    padding: 2px;
+  background-color: var(--tk-function-main);
+  color: var(--tk-function-text);
+  border: 2px solid var(--tk-function-border);
+  font-size: 40px; 
+  font-weight: bold;
+  line-height: 1.2;
+  padding: 2px;
 }
 
 .function-label {
-    /* Tampilan default {} di toolbar */
-    font-size: 40px;
-    margin-top: -10px;
+  font-size: 40px;
+  margin-top: -10px;
 }
 
-/* Utility class untuk konten function yang terisi */
 .function-content-new {
-    display: flex; 
-    align-items: center; 
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    line-height: 1;
-    /* Font size besar untuk ikon */
-    font-size: 38px;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  line-height: 1;
+  font-size: 38px;
 }
 
-
-/* --- FUNCTION DEFINITION BUBBLE (DI TOOLBAR) --- */
 .function-dropup {
-    position: absolute;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 200px; 
-    background-color: var(--tk-panel-dark); 
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    z-index: 10002; 
-    padding: 10px;
-    display: none; 
-    flex-direction: column;
-    align-items: center;
-    border: 2px solid var(--tk-function-border);
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px; 
+  background-color: var(--tk-panel-dark); 
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 10002; 
+  padding: 10px;
+  display: none; 
+  flex-direction: column;
+  align-items: center;
+  border: 2px solid var(--tk-function-border);
 }
 
 .function-dropup::after {
-    content: '';
-    position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-top: 10px solid var(--tk-panel-dark);
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid var(--tk-panel-dark);
 }
 
 .function-slot-container {
-    display: flex;
-    flex-direction: row; 
-    gap: 8px;
-    width: 100%;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  flex-direction: row; 
+  gap: 8px;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
 }
 
 .function-dropup .slot {
-    width: 80px;
-    height: 80px;
-    background-color: var(--tk-slot); 
-    border: 2px dashed var(--tk-function-border);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color 0.2s;
-    z-index: 5010;
+  width: 80px;
+  height: 80px;
+  background-color: var(--tk-slot); 
+  border: 2px dashed var(--tk-function-border);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s;
+  z-index: 5010;
 }
 
 .function-dropup .slot.highlight {
-    border-color: var(--tk-function-border);
-    background-color: #f7fee7; /* Warna highlight terang */
+  border-color: var(--tk-function-border);
+  background-color: #f7fee7;
 }
 
-/* Function Toggle Button (di Toolbar) */
 .function-toggle-btn {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background-color: var(--tk-function-main);
-    color: var(--tk-function-text);
-    border: 1px solid var(--tk-function-border);
-    font-size: 14px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    z-index: 20;
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--tk-function-main);
+  color: var(--tk-function-text);
+  border: 1px solid var(--tk-function-border);
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  z-index: 20;
 }
 /* --- END FUNCTION BLOCK CUSTOM --- */
 
 /* --- LOOP BLOCK CUSTOM --- */
 .block[data-type="loop"] {
-    background-color: #5d5dff;
-    color: white;
-    border: 2px solid #3a3ad0;
-    padding: 0; 
-    font-size: 24px;
-    cursor: grab;
-    position: relative; 
+  background-color: #5d5dff;
+  color: white;
+  border: 2px solid #3a3ad0;
+  padding: 0; 
+  font-size: 24px;
+  cursor: grab;
+  position: relative; 
 }
 
 .loop-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .loop-counter {
-    background: white;
-    color: #5d5dff;
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 5px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    user-select: none;
-    transition: background 0.1s;
+  background: white;
+  color: #5d5dff;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 5px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s;
 }
 
 .loop-counter:hover {
-    background: #e0e0e0;
+  background: #e0e0e0;
 }
 
-/* Container Bubble Loop */
 .loop-dropup {
-    position: absolute;
-    top: -100px; 
-    left: 50%;
-    transform: translateX(-50%);
-    width: 200px; 
-    
-    background-color: var(--tk-panel-dark); 
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    z-index: 10002; 
-    padding: 10px;
-    display: none; 
-    flex-direction: column;
-    align-items: center;
-    border: 2px solid var(--tk-brown);
+  position: absolute;
+  top: -100px; 
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px; 
+  background-color: var(--tk-panel-dark); 
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 10002; 
+  padding: 10px;
+  display: none; 
+  flex-direction: column;
+  align-items: center;
+  border: 2px solid var(--tk-brown);
 }
 
 .loop-dropup::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid var(--tk-panel-dark);
+}
+
+.loop-slot-container {
+  display: flex;
+  flex-direction: row; 
+  gap: 8px;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+}
+
+.loop-dropup .slot {
+  width: 80px;
+  height: 80px;
+  background-color: var(--tk-slot); 
+  border: 2px dashed var(--tk-brown);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s;
+  z-index: 5010;
+}
+
+.loop-dropup .slot.highlight {
+  border-color: #5d5dff;
+  background-color: #ffe999; 
+}
+
+.loop-dropup .slot .block {
+  position: relative; 
+  z-index: 5011; 
+}
+
+.loop-toggle-btn {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #5d5dff;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  z-index: 20; 
+}
+/* --- END LOOP BLOCK CUSTOM --- */
+
+/* =========================================
+   NEW: CONDITIONAL BLOCK (IF-ELSE)
+========================================= */
+
+.block[data-type="if-else"] {
+  background-color: var(--tk-cond-main); /* Orange */
+  color: var(--tk-cond-text); /* White Text */
+  border: 2px solid var(--tk-cond-border);
+  font-size: 20px;
+  font-weight: bold;
+  padding: 4px;
+}
+
+/* Hapus semua teks, hanya ikon "?" tersisa */
+.if-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+
+.if-text {
+    /* HILANGKAN TEKS */
+    display: none;
+}
+
+
+/* Conditional Dropup (Bubble) - Layout Horizontal dengan 2 Kotak */
+.conditional-dropup {
+    position: absolute;
+    top: -100px; /* Posisi disesuaikan agar di atas block */
+    left: 50%;
+    transform: translateX(-50%);
+    
+    background-color: var(--tk-panel-dark); 
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 10002;
+    padding: 10px;
+    display: none; 
+    flex-direction: row; /* Horizontal: Button + Slot */
+    align-items: center;
+    gap: 10px;
+    
+    border: 3px solid var(--tk-cond-border); 
+    width: 200px; /* Lebar hanya untuk menampung 2 item 80px + gap + padding */
+    height: 100px; /* Tinggi disesuaikan */
+    box-sizing: border-box;
+    justify-content: center;
+}
+
+.conditional-dropup::after {
     content: '';
     position: absolute;
     bottom: -10px;
@@ -472,74 +578,96 @@ body {
     border-top: 10px solid var(--tk-panel-dark);
 }
 
-.loop-slot-container {
-    display: flex;
-    flex-direction: row; 
-    gap: 8px;
-    width: 100%;
-    justify-content: center;
-    align-items: center;
-}
-
-.loop-dropup .slot {
+/* Tombol untuk membuka Direction Picker */
+.condition-btn {
     width: 80px;
     height: 80px;
-    background-color: var(--tk-slot); 
-    border: 2px dashed var(--tk-brown);
+    background: var(--tk-cond-main); /* Gunakan warna block utama */
+    border: 2px solid var(--tk-cond-border);
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: border-color 0.2s;
-    z-index: 5010;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    position: relative; /* Penting untuk Secondary Dropup */
 }
 
-.loop-dropup .slot.highlight {
-    border-color: #5d5dff;
-    background-color: #ffe999; 
+.condition-btn:hover {
+    background: #ff8c1a; /* Sedikit lebih gelap saat hover */
 }
 
-/* Memastikan block di dalam slot nested berada di atas background slot */
-.loop-dropup .slot .block {
-    position: relative; 
-    z-index: 5011; 
+.condition-btn img {
+    /* Ukuran disesuaikan agar terlihat jelas */
+    width: 48px; 
+    height: 48px;
+    image-rendering: pixelated;
 }
 
-/* Loop Toggle Button */
-.loop-toggle-btn {
+/* Secondary Dropup (Direction Picker) - Horizontal Dropup */
+.condition-select-dropup {
     position: absolute;
-    top: -5px;
-    right: -5px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background-color: #5d5dff;
-    color: white;
-    font-size: 14px;
-    font-weight: bold;
+    top: -10px; /* Di atas tombol utama */
+    left: 100%; /* Di sebelah kanan tombol utama */
+    transform: translateY(-50%);
+    
+    width: auto; /* Lebar dinamis */
+    background: var(--tk-panel);
+    border: 2px solid var(--tk-cond-border);
+    border-radius: 8px;
+    padding: 8px;
+    display: none;
+    flex-direction: row; /* HORIZONTAL */
+    gap: 5px;
+    z-index: 10003;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.direction-item {
+    padding: 5px;
+    background: #ffeab2;
+    border-radius: 5px;
+    text-align: center;
+    cursor: pointer;
+    width: 45px; /* Lebar Tetap */
+    height: 45px; /* Tinggi Tetap */
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    z-index: 20; 
 }
-/* --- END LOOP BLOCK CUSTOM --- */
+
+.direction-item:hover {
+    background: #ffdfa0;
+}
+
+.direction-item img {
+    width: 30px;
+    height: 30px;
+    vertical-align: middle;
+    image-rendering: pixelated;
+}
+
+/* Slot di dalam Conditional Bubble - Slot Block Sebelah Kanan */
+.conditional-dropup .nested-slot {
+    width: 80px; 
+    height: 80px;
+    border: 2px dashed var(--tk-cond-border); 
+    background: var(--tk-slot);
+    flex-shrink: 0;
+}
 
 
+/* =========================================
+   UTILITY & OVERLAYS
+========================================= */
 .drag-shadow {
   background: var(--tk-panel-dark);
   border: 2px solid var(--tk-brown);
   font-size: 38px;
   line-height: 38px;
-  /* Z-index sangat tinggi agar selalu terlihat saat di-drag */
   z-index: 10003; 
 }
 
-
-/* =============================
-   UTILITY & OVERLAYS
-============================= */
 .btn-reset-manual {
   position: fixed;
   top: 70px;
@@ -684,11 +812,6 @@ body {
   box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
   padding: 0;
 }
-
-.lang-btn:hover {
-  background: rgb(255, 233, 97);
-}
-
 
 .lang-btn:hover {
   background: #ffdd66;

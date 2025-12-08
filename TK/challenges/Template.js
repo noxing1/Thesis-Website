@@ -135,6 +135,8 @@ let functionBlockDef = null;
 // Isi (content) dari function, global state yang digunakan semua instance.
 let functionContent = [null, null]; 
 let isFunctionBubbleOpen = false; 
+// Menyimpan isi Loop yang ada di dalam Function Definition (Visual Persistence)
+let functionLoopNestedContent = Array(2).fill(null).map(() => Array(2).fill(null)); 
 // -----------------------------------
 
 let realBlockDetached = false;
@@ -175,33 +177,35 @@ function getBestSlot(block) {
     }
   });
 
-  // --- 2. Mencari slot terbaik di nested slots (Priority 2, hanya jika BUKAN Loop/Function) ---
-  if (!isDraggingLoop && !isDraggingFunction) {
-      // 2a. Nested Loop Slots
-      if (openLoopIndex !== -1) {
-        const activeBubble = document.getElementById('global-loop-dropup');
-        if (activeBubble) {
-            activeBubble.querySelectorAll(".nested-slot").forEach(nestedSlot => {
-              let ov = getOverlap(block, nestedSlot);
-              if (ov > bestVal && ov > 0.7) { 
-                  bestVal = ov;
-                  best = nestedSlot;
-              }
-            });
+  // --- 2. Mencari slot terbaik di nested slots (Priority 2) ---
+  // Kita biarkan semua block memiliki peluang overlap di sini, pembatasan di drop()
+  
+  // 2a. Nested Loop Slots
+  if (openLoopIndex !== -1) {
+    const activeBubble = document.getElementById('global-loop-dropup');
+    if (activeBubble) {
+        // FIX BUG 2b: Memperoleh drag masuk loop meskipun block yang ada di slot adalah block lain.
+        activeBubble.querySelectorAll(".nested-slot").forEach(nestedSlot => {
+          let ov = getOverlap(block, nestedSlot);
+          // Menggunakan overlap 0.7 untuk prioritas tinggi
+          if (ov > bestVal && ov > 0.7) { 
+              bestVal = ov;
+              best = nestedSlot;
+          }
+        });
+    }
+  }
+  
+  // 2b. Nested Function Definition Slots (Hanya di Toolbar)
+  const functionBubble = document.getElementById('function-definition-bubble');
+  if (isFunctionBubbleOpen && functionBubble) {
+      functionBubble.querySelectorAll(".function-nested-slot").forEach(nestedSlot => {
+        let ov = getOverlap(block, nestedSlot);
+        if (ov > bestVal && ov > 0.5) { 
+            bestVal = ov;
+            best = nestedSlot;
         }
-      }
-      // 2b. Nested Function Definition Slots (Hanya di Toolbar)
-      const functionBubble = document.getElementById('function-definition-bubble');
-      if (isFunctionBubbleOpen && functionBubble) {
-          functionBubble.querySelectorAll(".function-nested-slot").forEach(nestedSlot => {
-            let ov = getOverlap(block, nestedSlot);
-            // Overlap lebih kecil karena kita ingin sensitivitas lebih rendah terhadap toolbar
-            if (ov > bestVal && ov > 0.5) { 
-                bestVal = ov;
-                best = nestedSlot;
-            }
-          });
-      }
+      });
   }
   
   return best;
@@ -250,7 +254,7 @@ function createFunctionBlock() {
     block.className = "block";
     block.setAttribute("data-type", "function");
     // Inner HTML akan di-update oleh renderWorkspace
-    block.innerHTML = `{}`; 
+    block.innerHTML = `Function: {}`; 
     return block;
 }
 
@@ -263,13 +267,26 @@ function getIconHtml(sourceBlock) {
     if (!sourceBlock) return '';
     const type = sourceBlock.getAttribute('data-type');
     
+    // Check if the block is a complex type that needs different rendering logic
+    // Menggunakan font size 38px
+    const iconFontSize = '28px'; 
+    
+    if (type === 'loop') {
+         // Loop blocks are now allowed inside function content
+         return `<span style="font-size: ${iconFontSize}; color: #3a3ad0;">🔁</span>`;
+    }
+    
     if (type === 'jalan') {
         const dir = sourceBlock.getAttribute('data-direction');
         const icon = {up:"🡱", right:"🡲", left:"🡸", down:"🡳"}[dir];
-        return `<span style="font-size: 14px; color: var(--tk-brown);">${icon}</span>`;
+        return `<span style="font-size: ${iconFontSize}; color: var(--tk-brown);">${icon}</span>`; 
     }
     if (type === 'tembak') {
-        return `<span style="font-size: 14px; color: var(--tk-brown);">🔫</span>`;
+        return `<span style="font-size: ${iconFontSize}; color: var(--tk-brown);">🔫</span>`; 
+    }
+    // Function Call inside Loop/Function (re-nesting is allowed for calls)
+    if (type === 'function') {
+         return `<span style="font-size: ${iconFontSize}; color: var(--tk-function-text);">{}</span>`;
     }
     return '';
 }
@@ -282,8 +299,10 @@ function getIconHtml(sourceBlock) {
 function attachDragEventsToBlock(block) {
   block.onmousedown = (e) => {
     e.preventDefault();
+    e.stopPropagation(); // FIX UTAMA: Mencegah event bubbling ke elemen induk (Function Button) yang salah.
 
     // Check if the click originated from control buttons
+    // FIX BUG 2: Mencegah drag jika klik berasal dari counter loop atau tombol toggle
     if (e.target.closest('.loop-counter') || e.target.closest('.loop-toggle-btn') || e.target.closest('.function-toggle-btn')) return; 
 
     isFromWorkspace = block.closest(".workspace-area") !== null;
@@ -295,68 +314,119 @@ function attachDragEventsToBlock(block) {
     originalNestedIndex = null;
     
     // --- State preparation based on drag origin ---
+    let dragAborted = false;
+    
     if (isNestedDrag) {
         // Drag dari NESTED SLOT (Loop atau Function)
         
         const isFromFunction = block.closest('.function-nested-slot') !== null;
         
         if (isFromFunction) {
-            // Drag dari Function Definition Slot (HANYA MUNGKIN INDEX 0 atau 1)
-            originalSlotIndex = -1; // Flag untuk Function Global
+            // Drag dari Function Definition Slot
+            originalSlotIndex = -1; // Flag: Function Global
             originalNestedIndex = parseInt(block.getAttribute('data-nested-index'));
             
-            // Clear the function content state
-            if (originalNestedIndex !== null && originalNestedIndex !== -1) {
-                functionContent[originalNestedIndex] = null;
-                console.log(`[DEBUG] Block ${block.getAttribute('data-type')} dihapus dari functionContent[${originalNestedIndex}].`);
-            } else {
-                console.warn("[WARN] Gagal mendapatkan indeks asal nested function block.");
-                return;
-            }
-
-        } else {
-            // Drag dari Loop Nested Slot
-            const parentLoopIndexAttr = block.getAttribute('data-parent-loop-index');
-            const nestedIndexAttr = block.getAttribute('data-nested-index');
+            // --- Validasi dan Fallback untuk Function Block ---
+            // Cek cepat dari atribut DOM
+            let isValidIndex = !isNaN(originalNestedIndex) && originalNestedIndex >= 0 && originalNestedIndex < functionContent.length;
             
-            if (!parentLoopIndexAttr || !nestedIndexAttr) {
-                 const parentLoopBlock = block.closest('.block[data-type="loop"]');
-                 if (parentLoopBlock) {
-                    for(let i = 0; i < workspaceSlots.length; i++) {
-                        if (workspaceSlots[i] === parentLoopBlock) {
-                            originalSlotIndex = i; 
-                            break;
-                        }
-                    }
+            if (!isValidIndex) {
+                 // Fallback: Cari di state array (Mengatasi referensi yang hilang - PRIORITAS UNTUK BUG 1)
+                 let found = false;
+                 for (let i = 0; i < functionContent.length; i++) {
+                     if (functionContent[i] === block) { // Find by object reference
+                         originalNestedIndex = i;
+                         isValidIndex = true;
+                         found = true;
+                         break;
+                     }
+                 }
+                 if (!found) {
+                     console.error("[CRITICAL ERROR] Nested Function block has inconsistent state/index. Aborting drag and forcing render.");
+                     dragAborted = true;
+                     // Defensive flush: Rerender immediately to fix state mismatch
+                     renderWorkspace(); 
+                 }
+            }
+            
+            if (!dragAborted) {
+                // Clear the function content state (Hapus dari state saat mousedown)
+                // Cek apakah blok yang ditarik adalah Loop yang memiliki anak (dari functionLoopNestedContent)
+                if (functionContent[originalNestedIndex] && functionContent[originalNestedIndex].getAttribute('data-type') === 'loop') {
+                    // Jika Loop ditarik keluar, anak-anaknya juga dihapus
+                    functionLoopNestedContent[originalNestedIndex] = Array(2).fill(null);
+                }
+
+                functionContent[originalNestedIndex] = null; 
+                console.log(`[DEBUG] Block ${block.getAttribute('data-type')} dihapus dari functionContent[${originalNestedIndex}].`);
+                block.setAttribute('data-is-nested', 'true');
+            }
+            
+        } else {
+            // Drag dari Loop Nested Slot (Function Loop atau Workspace Loop)
+
+            const parentLoopId = block.getAttribute('data-parent-loop-index');
+            originalNestedIndex = parseInt(block.getAttribute('data-nested-index')); 
+
+            // Kasus 1: Drag dari Loop dalam Function
+            if (typeof parentLoopId === 'string' && parentLoopId.startsWith('nested-f')) {
+                 const funcNestedIndex = parseInt(parentLoopId.replace('nested-f', ''));
+                 originalSlotIndex = parentLoopId; // Simpan ID string sebagai index parent
+
+                 if (!isNaN(originalNestedIndex) && functionLoopNestedContent[funcNestedIndex] && originalNestedIndex >= 0) {
+                     functionLoopNestedContent[funcNestedIndex][originalNestedIndex] = null;
+                     console.log(`[DEBUG] Block ${block.getAttribute('data-type')} dihapus dari functionLoopNestedContent[${funcNestedIndex}][${originalNestedIndex}].`);
                  } else {
-                     console.error("[ERROR] Nested block missing indices and parent loop block.");
-                     return;
+                     console.error("[CRITICAL ERROR] Nested Function Loop block has inconsistent state/indices. Aborting drag.");
+                     dragAborted = true;
+                     renderWorkspace();
                  }
-                 for (let i = 0; i < loopContent.length; i++) {
-                    const nested = loopContent[i];
-                    const idx = nested.indexOf(block);
-                    if (idx !== -1) {
-                        originalNestedIndex = idx;
-                        break;
-                    }
+
+            } 
+            // Kasus 2: Drag dari Loop dalam Workspace (Integer Index)
+            else {
+                 originalSlotIndex = parseInt(parentLoopId);
+                 
+                 // --- Validasi dan Fallback untuk Loop Nested Block ---
+                 let isValidIndex = !isNaN(originalSlotIndex) && originalSlotIndex >= 0 && originalSlotIndex < loopContent.length &&
+                                    !isNaN(originalNestedIndex) && originalNestedIndex >= 0 && originalNestedIndex < (loopContent[originalSlotIndex] ? loopContent[originalSlotIndex].length : 0);
+                 
+                 if (!isValidIndex) {
+                     // Fallback/Error handling (seperti sebelumnya)
+                     let found = false;
+                     for (let i = 0; i < loopContent.length; i++) {
+                         const nested = loopContent[i];
+                         if (nested) {
+                             const idx = nested.indexOf(block); 
+                             if (idx !== -1) {
+                                 originalSlotIndex = i;
+                                 originalNestedIndex = idx;
+                                 found = true;
+                                 break;
+                             }
+                         }
+                     }
+                     if (!found) {
+                         console.error("[CRITICAL ERROR] Nested Loop block has inconsistent state/indices. Aborting drag and forcing render.");
+                         dragAborted = true;
+                         renderWorkspace();
+                     }
                  }
-            } else {
-                originalSlotIndex = parseInt(parentLoopIndexAttr); 
-                originalNestedIndex = parseInt(nestedIndexAttr); 
+                 
+                 if (!dragAborted) {
+                      loopContent[originalSlotIndex][originalNestedIndex] = null;
+                      console.log(`[DEBUG] Block ${block.getAttribute('data-type')} dihapus dari loopContent[${originalSlotIndex}][${originalNestedIndex}].`);
+                 }
             }
 
-            if (originalSlotIndex !== null && originalNestedIndex !== null && originalSlotIndex !== -1 && originalNestedIndex !== -1) {
-                loopContent[originalSlotIndex][originalNestedIndex] = null;
-                console.log(`[DEBUG] Block ${block.getAttribute('data-type')} dihapus dari loopContent[${originalSlotIndex}][${originalNestedIndex}].`);
-            } else {
-                console.warn("[WARN] Gagal mendapatkan indeks asal nested loop block.");
-                return;
+            if (!dragAborted) {
+                block.setAttribute('data-is-nested', 'true');
             }
         }
         
-        block.setAttribute('data-is-nested', 'true');
-        // JANGAN TUTUP BUBBLE
-
+        if (dragAborted) {
+            return; // ABORT DRAG
+        }
     } else {
         // Drag dari MAIN SLOT atau TOOLBAR
         
@@ -376,6 +446,11 @@ function attachDragEventsToBlock(block) {
             originalSlotIndex = getSlotIndex(parentSlot);
             block.removeAttribute('data-is-nested');
             
+            // Hapus isi loop juga jika Loop ditarik keluar
+            if (block.getAttribute('data-type') === 'loop') {
+                loopContent[originalSlotIndex] = Array(2).fill(null);
+            }
+
             // Clear the main workspace slot array immediately.
             workspaceSlots[originalSlotIndex] = null; 
             console.log(`[DEBUG] Block ${block.getAttribute('data-type')} dihapus dari workspaceSlots[${originalSlotIndex}].`);
@@ -385,6 +460,7 @@ function attachDragEventsToBlock(block) {
 
     realBlock = block;
 
+    // Lakukan penghapusan dari DOM HANYA setelah drag tidak di-abort
     if (block.parentElement) {
       // Hapus elemen dari DOM
       block.parentElement.removeChild(block);
@@ -444,33 +520,61 @@ function drop() {
 
       if (isLoopNestedTarget || isFunctionNestedTarget) {
           
-          if (blockToPlace.getAttribute("data-type") === "loop" || blockToPlace.getAttribute("data-type") === "function") {
-             // Loop atau Function TIDAK bisa di nested
+          // --- CONSTRAINT CHECK ---
+          
+          // REJECT: Function cannot be nested inside its own definition (Recursion)
+          if (isFunctionNestedTarget && blockToPlace.getAttribute("data-type") === "function") {
              shouldRender = wasNestedDrag || isFromWorkspace;
           } 
           
+          // REJECT: Loop cannot be nested inside Loop (structural complexity)
+          else if (isLoopNestedTarget && blockToPlace.getAttribute("data-type") === "loop") {
+             shouldRender = wasNestedDrag || isFromWorkspace;
+          }
+          
+          // --- PLACEMENT LOGIC ---
           else if (isFunctionNestedTarget) {
               // Drop berhasil ke NESTED SLOT FUNCTION DEFINITION (TOOLBAR)
               const nestedIndex = parseInt(target.getAttribute("data-index"));
               const existingNestedBlock = functionContent[nestedIndex];
 
-              // Jika slot function sudah terisi, kembalikan block lama ke slot asalnya
+              // Jika blok yang ditimpa adalah Loop, hapus juga isi Loop-nya
+              if (existingNestedBlock && existingNestedBlock.getAttribute('data-type') === 'loop') {
+                  functionLoopNestedContent[nestedIndex] = Array(2).fill(null);
+              }
+              
+              // Swap Logic: Jika slot function sudah terisi, kembalikan block lama ke slot asalnya
               if (existingNestedBlock) {
                   if (wasNestedDrag) {
-                       // Swap block dari function/loop nested ke function/loop nested asal blockToPlace
-                       if (originalSlotIndex === -1) { // Asal dari Function
-                           functionContent[originalNestedIndex] = existingNestedBlock;
-                       } else if (originalSlotIndex !== null) { // Asal dari Loop
+                       if (originalSlotIndex === -1) { // Asal dari Function (Slot Function Definition)
+                           // Jika asal dari Loop Function, kita perlu tahu Loop mana yang jadi induk
+                           if (typeof originalSlotIndex === 'string' && String(originalSlotIndex).startsWith('nested-f')) {
+                               const funcNestedIndex = parseInt(originalSlotIndex.replace('nested-f', ''));
+                               functionLoopNestedContent[funcNestedIndex][originalNestedIndex] = existingNestedBlock;
+                           } else {
+                               functionContent[originalNestedIndex] = existingNestedBlock;
+                           }
+                       } else if (originalSlotIndex !== null && originalSlotIndex !== -1) { // Asal dari Loop Workspace
                            loopContent[originalSlotIndex][originalNestedIndex] = existingNestedBlock;
                        }
                   } else if (isFromWorkspace && originalSlotIndex !== null) {
-                       // Swap block dari function nested ke main slot asal blockToPlace
                        workspaceSlots[originalSlotIndex] = existingNestedBlock;
                   }
               }
 
               // Simpan Block ke Function Definition Slot
               functionContent[nestedIndex] = blockToPlace;
+              
+              // Jika block yang diletakkan adalah Loop, buka bubble-nya (Function Loop ID)
+              if (blockToPlace.getAttribute("data-type") === "loop") {
+                  newOpenLoopIndex = `nested-f${nestedIndex}`;
+              } else {
+                  // Pastikan loop bubble ditutup jika block non-loop diletakkan
+                  if (typeof openLoopIndex === 'string' && openLoopIndex.startsWith('nested-f')) {
+                       newOpenLoopIndex = -1;
+                  }
+              }
+
               isFunctionBubbleOpen = true; // Pertahankan bubble terbuka
               placedInFunction = true;
               shouldRender = true;
@@ -478,33 +582,67 @@ function drop() {
           }
           
           else if (isLoopNestedTarget) {
-              // Drop berhasil ke NESTED SLOT LOOP
-              let parentIndex = openLoopIndex; 
+              // Drop berhasil ke NESTED SLOT LOOP (Workspace Loop atau Function-Nested Loop)
+              let parentLoopId = openLoopIndex; 
               
-              if (parentIndex !== -1) {
+              const isFunctionNestedLoop = target.hasAttribute('data-f-parent');
+
+              if (parentLoopId !== -1) {
                   const nestedIndex = parseInt(target.getAttribute("data-index"));
-                  const existingNestedBlock = loopContent[parentIndex][nestedIndex];
-                      
-                  // Swap Logic: Jika slot nested sudah terisi, kembalikan ke slot asal
-                  if (existingNestedBlock) {
-                       if (wasNestedDrag) {
-                           // Swap block dari loop/function nested ke loop/function nested asal blockToPlace
-                            if (originalSlotIndex === -1) { // Asal dari Function
-                                functionContent[originalNestedIndex] = existingNestedBlock;
-                            } else if (originalSlotIndex !== null) { // Asal dari Loop
-                                loopContent[originalSlotIndex][originalNestedIndex] = existingNestedBlock;
-                            }
-                       } else if (isFromWorkspace && originalSlotIndex !== null) {
-                           // Swap block dari loop nested ke main slot asal blockToPlace
-                           workspaceSlots[originalSlotIndex] = existingNestedBlock;
-                       }
-                  }
                   
-                  // Simpan Block ke Loop Nested Slot Baru
-                  loopContent[parentIndex][nestedIndex] = blockToPlace;
-                  newOpenLoopIndex = parentIndex; // Pertahankan loop bubble terbuka
-                  shouldRender = true;
+                  if (isFunctionNestedLoop) {
+                       const funcNestedIndex = parseInt(String(parentLoopId).replace('nested-f', ''));
+
+                       const existingNestedBlock = functionLoopNestedContent[funcNestedIndex][nestedIndex];
+
+                       if (existingNestedBlock) {
+                           if (wasNestedDrag) {
+                                if (originalSlotIndex === -1) {
+                                    functionContent[originalNestedIndex] = existingNestedBlock;
+                                } else if (typeof originalSlotIndex === 'string' && String(originalSlotIndex).startsWith('nested-f')) { // Asal dari Loop Function
+                                    const origFuncIndex = parseInt(originalSlotIndex.replace('nested-f', ''));
+                                    functionLoopNestedContent[origFuncIndex][originalNestedIndex] = existingNestedBlock;
+                                } else if (originalSlotIndex !== null) {
+                                    loopContent[originalSlotIndex][originalNestedIndex] = existingNestedBlock;
+                                }
+                           } else if (isFromWorkspace && originalSlotIndex !== null) {
+                               workspaceSlots[originalSlotIndex] = existingNestedBlock;
+                           }
+                       }
+                       
+                       functionLoopNestedContent[funcNestedIndex][nestedIndex] = blockToPlace;
+                       
+                       console.log(`[DEBUG] Block ${blockToPlace.getAttribute('data-type')} disimpan ke functionLoopNestedContent[${funcNestedIndex}][${nestedIndex}].`);
+
+                       isFunctionBubbleOpen = true; 
+                       
+                       newOpenLoopIndex = parentLoopId;
+                       shouldRender = true;
+                       
+                  } else {
+                      const existingNestedBlock = loopContent[parentLoopId][nestedIndex];
+
+                      // Swap Logic: Jika slot nested sudah terisi, kembalikan ke slot asal
+                      if (existingNestedBlock) {
+                           if (wasNestedDrag) {
+                                if (originalSlotIndex === -1) { // Asal dari Function
+                                    functionContent[originalNestedIndex] = existingNestedBlock;
+                                } else if (originalSlotIndex !== null && originalSlotIndex !== -1) { // Asal dari Loop Workspace
+                                    loopContent[originalSlotIndex][originalNestedIndex] = existingNestedBlock;
+                                }
+                           } else if (isFromWorkspace && originalSlotIndex !== null) {
+                               workspaceSlots[originalSlotIndex] = existingNestedBlock;
+                           }
+                      }
+                      
+                      // Simpan Block ke Loop Nested Slot Baru
+                      // NOTE: parentLoopId di sini adalah integer 
+                      loopContent[parentLoopId][nestedIndex] = blockToPlace;
+                      newOpenLoopIndex = parentLoopId; // Pertahankan loop bubble terbuka
+                      shouldRender = true;
+                  }
               } else {
+                  // Fallback jika parentLoopId tidak valid (seharusnya tidak terjadi jika target adalah nested-slot)
                   shouldRender = wasNestedDrag || isFromWorkspace;
               }
           }
@@ -520,15 +658,12 @@ function drop() {
                  if (existingTargetBlock.getAttribute("data-type") === "loop") {
                       loopContent[originalSlotIndex] = loopContent[targetIndex];
                   }
-                  // Clean function content if we moved a function block out
-                  if (existingTargetBlock.getAttribute("data-type") === "function" && blockToPlace.getAttribute("data-type") !== "function") {
-                       // N/A
-                  }
                   
                   workspaceSlots[originalSlotIndex] = existingTargetBlock;
                   if (newOpenLoopIndex === targetIndex) newOpenLoopIndex = originalSlotIndex;
             }
             // Skenario 2: Nested Slot (Loop/Function) ke Main Slot (Hapus block lama jika ada)
+            // (Blok yang datang dari nested drag akan menimpa block di workspace, dan block lama dibuang)
             else if (wasNestedDrag && existingTargetBlock) {
                 if (existingTargetBlock.getAttribute("data-type") === "loop") {
                     loopContent[targetIndex] = Array(2).fill(null);
@@ -563,29 +698,38 @@ function drop() {
       }
 
   } else {
-      // Drop gagal (dilepas di luar slot - Penghapusan)
+      // Drop gagal (dilepas di luar slot - Penghapusan atau Snap Back)
       
-      if (wasNestedDrag || isFromWorkspace) {
-          shouldRender = true; 
-      }
-      
-      // Hapus konten loop jika loop block dibuang
-      if (isFromWorkspace && !wasNestedDrag && realBlock.getAttribute('data-type') === 'loop' && originalSlotIndex !== null) {
-          loopContent[originalSlotIndex] = Array(2).fill(null);
-      }
-
-      // Jika drag berasal dari nested loop, loop bubble tetap terbuka
-      if (wasNestedDrag && originalSlotIndex !== -1 && !placedInFunction) {
-          newOpenLoopIndex = originalSlotIndex; 
-      }
-      
-      // Jika drag berasal dari function definition, bubble function tetap terbuka
-      if (wasNestedDrag && originalSlotIndex === -1) {
-          isFunctionBubbleOpen = true; 
-      }
-
+      // FIX BUG 1/2a/3: Jika berasal dari drag BERSARANG (NESTED DRAG) dan tidak ada target, block dihapus (TRASH)
       if (wasNestedDrag) {
+          shouldRender = true; // Perlu render untuk mengupdate bubble yang kosong.
+          
+          // Pertahankan bubble terbuka
+          if (originalSlotIndex === -1) { // Asal Function
+              isFunctionBubbleOpen = true;
+          } else if (originalSlotIndex !== null && typeof originalSlotIndex === 'number') { // Asal Loop Workspace
+              newOpenLoopIndex = originalSlotIndex; 
+          } else if (originalSlotIndex !== null && typeof originalSlotIndex === 'string') { // Asal Loop Function
+             isFunctionBubbleOpen = true;
+             newOpenLoopIndex = originalSlotIndex;
+          }
+          
           blockToPlace.removeAttribute('data-is-nested');
+          
+      } 
+      // JIKA BUKAN nested drag, dan berasal dari workspace utama
+      else if (isFromWorkspace) {
+          // Block dari workspace utama DIBUANG.
+          shouldRender = true; 
+          // Jika block Loop dibuang, pastikan konten loop-nya juga terhapus.
+          if (realBlock.getAttribute('data-type') === 'loop' && originalSlotIndex !== null) {
+             loopContent[originalSlotIndex] = Array(2).fill(null);
+          }
+      }
+      
+      // Hapus visual block yang melayang (clone) dari DOM
+      if (realBlock && realBlock.parentNode === document.body) {
+           realBlock.remove();
       }
   }
   
@@ -612,21 +756,28 @@ function highlightSlots(block) {
     if (getOverlap(block, slot) > 0.5) slot.classList.add("highlight");
   });
   
-  const isDraggingLoopOrFunction = block.getAttribute("data-type") === "loop" || block.getAttribute("data-type") === "function";
+  const isDraggingLoop = block.getAttribute("data-type") === "loop";
+  const isDraggingFunction = block.getAttribute("data-type") === "function";
 
-  if (!isDraggingLoopOrFunction) {
-      // Highlight Nested Loop Slots
-      if (openLoopIndex !== -1) {
+  // Highlight Nested Slots (Loop dan Function)
+  
+  // Highlight Nested Loop Slots
+  if (openLoopIndex !== -1) {
+    // Hanya izinkan block selain Loop (untuk Loop Nested)
+    if (!isDraggingLoop) {
         const activeBubble = document.getElementById('global-loop-dropup');
         if (activeBubble) {
             activeBubble.querySelectorAll(".nested-slot").forEach(nestedSlot => {
               if (getOverlap(block, nestedSlot) > 0.7) nestedSlot.classList.add("highlight");
             });
         }
-      }
-      
-      // Highlight Nested Function Slots
-      if (isFunctionBubbleOpen) {
+    }
+  }
+  
+  // Highlight Nested Function Slots
+  if (isFunctionBubbleOpen) {
+      // Hanya izinkan block selain Function (untuk Function Nested)
+      if (!isDraggingFunction) {
           const functionBubble = document.getElementById('function-definition-bubble');
           if (functionBubble) {
               functionBubble.querySelectorAll(".function-nested-slot").forEach(nestedSlot => {
@@ -650,6 +801,12 @@ function renderFunctionToolbar() {
     const toggleBtn = document.getElementById('function-toggle-btn-toolbar');
 
     if (!btnFunction || !functionBubble || !toggleBtn) return;
+
+    // --- HAPUS BUBBLE LOOP GLOBAL SEBELUM RENDER ULANG ---
+    const globalDropup = document.getElementById('global-loop-dropup');
+    if (globalDropup) globalDropup.remove();
+    // --- END HAPUS BUBBLE LOOP GLOBAL ---
+
 
     // 1. Setup Toggle Button
     toggleBtn.innerText = isFunctionBubbleOpen ? "✕" : "▼";
@@ -676,38 +833,158 @@ function renderFunctionToolbar() {
         const slot = nestedSlots[nestedIndex];
         slot.innerHTML = ""; // Clear
         
+        // Hapus dropup loop lama yang mungkin masih ada (fallback)
+        const existingDropup = slot.querySelector(".loop-dropup");
+        if (existingDropup) existingDropup.remove();
+        
         if (nestedBlock) {
             // KRITIS: Tambahkan index untuk lookup yang lebih mudah saat drag.
-            nestedBlock.setAttribute('data-parent-loop-index', -1); // Flag: Function global
+            // Function Definition blocks memiliki parent index -1
+            nestedBlock.setAttribute('data-parent-loop-index', -1); 
             nestedBlock.setAttribute('data-nested-index', nestedIndex);
 
             slot.appendChild(nestedBlock);
             cleanPositionStyles(nestedBlock);
             attachDragEventsToBlock(nestedBlock); 
+            
+            // --- LOGIKA KHUSUS LOOP DI DALAM FUNCTION (BUG 2 FIX) ---
+            if (nestedBlock.getAttribute("data-type") === "loop") {
+                 const b = nestedBlock; // Alias
+                 
+                 // 1. Tambahkan tombol toggle manual
+                 const toggleBtn = document.createElement("div");
+                 toggleBtn.className = "loop-toggle-btn";
+                 // Karena Loop ini berada di Function definition, kita perlu ID unik yang tidak berbenturan
+                 // dengan loop di workspace. Kita gunakan ID `nested-f${nestedIndex}`
+                 const loopId = `nested-f${nestedIndex}`; 
+                 
+                 toggleBtn.innerText = (loopId === openLoopIndex) ? "✕" : "▼"; 
+                 b.appendChild(toggleBtn);
+                 
+                 // 1.1 Handle click pada tombol toggle
+                 toggleBtn.onclick = (e) => {
+                     e.stopPropagation(); 
+                     if (loopId === openLoopIndex) {
+                         openLoopIndex = -1; // Tutup
+                     } else {
+                         isFunctionBubbleOpen = true; // Pastikan bubble function tetap terbuka
+                         openLoopIndex = loopId; // Buka loop ini
+                     }
+                     renderFunctionToolbar(); // Render ulang toolbar untuk menampilkan bubble loop
+                     renderWorkspace(true); // Render ulang workspace untuk update function instances
+                 };
+                 
+                 // 1.2 Handle click pada counter (untuk ubah count)
+                 const counter = b.querySelector(".loop-counter");
+                 if (counter) {
+                      counter.onmousedown = (e) => { e.stopPropagation(); }; 
+                      counter.onclick = (e) => {
+                           e.stopPropagation();
+                           let currentCount = parseInt(b.getAttribute("data-loop-count"));
+                           let newCount = currentCount === 5 ? 2 : currentCount + 1;
+                           if (newCount === 1) newCount = 2; 
+
+                           b.setAttribute("data-loop-count", newCount);
+                           
+                           isFunctionBubbleOpen = true;
+                           openLoopIndex = loopId; 
+                           renderFunctionToolbar();
+                           renderWorkspace(true); 
+                      };
+                      counter.innerText = b.getAttribute("data-loop-count"); // Update visual
+                 }
+                 
+                 // 2. Tambahkan Nested Dropup (Bubble)
+                 let loopDropup = document.createElement("div");
+                 loopDropup.className = "loop-dropup";
+                 loopDropup.id = `loop-dropup-${loopId}`;
+                 loopDropup.innerHTML = `
+                     <div class="loop-slot-container">
+                         <div class="slot nested-slot" data-index="0" data-f-parent="true"></div>
+                         <div class="slot nested-slot" data-index="1" data-f-parent="true"></div>
+                     </div>
+                 `;
+                 
+                 // 3. Posisikan dan Tampilkan Bubble jika aktif
+                 if (loopId === openLoopIndex) {
+                      // A. Set ID unik agar bisa dilacak saat drop
+                      loopDropup.id = 'global-loop-dropup'; 
+                      
+                      // B. Ambil posisi Block Loop di layar (Block di dalam Function Bubble)
+                      const blockRect = b.getBoundingClientRect();
+                      
+                      // C. Tentukan posisi absolut bubble (Posisi di ATAS blok)
+                      loopDropup.style.position = 'fixed';
+                      // Kita harus offset relatif terhadap viewport karena loopDropup dipindahkan ke body
+                      loopDropup.style.top = `${blockRect.top - 105}px`; 
+                      loopDropup.style.left = `${blockRect.left + blockRect.width / 2}px`;
+                      loopDropup.style.transform = 'translateX(-50%)'; 
+                      loopDropup.style.zIndex = 2000; 
+
+                      
+                      // D. Pindahkan bubble ke BODY (Stacking Context terluar)
+                      document.body.appendChild(loopDropup);
+                      loopDropup.style.display = "flex";
+                      
+                      // 4. Render Isi Nested Slot dari state baru
+                      const nestedSlotsInBubble = loopDropup.querySelectorAll(".nested-slot");
+                      functionLoopNestedContent[nestedIndex].forEach((innerBlock, innerIndex) => {
+                          if (innerBlock) {
+                              innerBlock.setAttribute('data-parent-loop-index', loopId); // ID string
+                              innerBlock.setAttribute('data-nested-index', innerIndex);
+                              
+                              nestedSlotsInBubble[innerIndex].innerHTML = "";
+                              nestedSlotsInBubble[innerIndex].appendChild(innerBlock);
+                              cleanPositionStyles(innerBlock);
+                              attachDragEventsToBlock(innerBlock);
+                          }
+                      });
+                 }
+                 
+            } else if (nestedBlock.getAttribute("data-type") === "function") {
+                 // Perbarui tampilan visual block Function yang ada di nested slot
+                 createFunctionBlockDisplay(nestedBlock);
+            }
         }
     });
 }
 
 
 function createFunctionBlockDisplay(b) {
-    let displayHtml = `{}`;
-    const innerIcons = functionContent.map(getIconHtml).join('');
+    const innerIcons = functionContent.map(getIconHtml).filter(html => html.length > 0);
     
-    // Jika ada konten, tampilkan ringkasan
-    if (innerIcons.length > 0) {
-        displayHtml = `
-            <div class="function-content">
-                <div>F: {}</div>
-                <div class="function-icon-container">${innerIcons}</div>
-            </div>
+    // Default/Empty state: {} (Bug 3 Fix)
+    if (innerIcons.length === 0) {
+        // Tampilan {} besar
+        b.innerHTML = `<span style="font-size: 40px; margin-top: -10px;">{}</span>`; 
+        b.style.fontSize = ''; // Gunakan CSS default
+        b.style.padding = '';
+        return; 
+    }
+    
+    // Content state: 🡳 | 🡳 (Bug 3 Fix)
+    // Font size untuk pemisah dikecilkan menjadi 38px, ikon sudah 38px di getIconHtml
+    const displayHtml = innerIcons.join('<span style="font-size: 38px; color: var(--tk-function-text); margin: 0 4px; font-weight: bold;">|</span>');
+    
+    b.innerHTML = `
+        <div class="function-content-new">
+            ${displayHtml}
+        </div>
+    `;
+    b.style.fontSize = '12px'; 
+    b.style.padding = '4px';
+    
+    // Pastikan style display flex diterapkan untuk centering
+    const newContent = b.querySelector('.function-content-new');
+    if (newContent) {
+        newContent.style.cssText = `
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            line-height: 1;
         `;
-        b.innerHTML = displayHtml;
-        b.style.fontSize = '12px';
-        b.style.padding = '2px';
-    } else {
-        // Jika kosong, kembali ke tampilan dasar
-        b.innerHTML = `{}`;
-        b.style.fontSize = '18px';
     }
 }
 
@@ -735,8 +1012,6 @@ function renderWorkspace(isFunctionUpdate = false) {
     // HANYA UPDATE visual block Function di workspace
     if (isFunctionUpdate && b && b.getAttribute("data-type") === "function") {
          createFunctionBlockDisplay(b);
-         // Karena hanya visual, kita tidak perlu memanggil attachDragEventsToBlock 
-         // atau logika DOM berat lainnya jika block tidak dipindahkan.
          return; 
     }
     
@@ -763,33 +1038,38 @@ function renderWorkspace(isFunctionUpdate = false) {
       // --- LOGIKA KHUSUS LOOP ---
       if (b.getAttribute("data-type") === "loop") {
           
+          const loopId = i; // ID loop di workspace adalah index slotnya
+          
           // Tambahkan tombol toggle manual
           const toggleBtn = document.createElement("div");
           toggleBtn.className = "loop-toggle-btn";
-          toggleBtn.innerText = (i === openLoopIndex) ? "✕" : "▼"; // Visual status
+          toggleBtn.innerText = (loopId === openLoopIndex) ? "✕" : "▼"; // Visual status
           b.appendChild(toggleBtn);
           
           toggleBtn.onclick = (e) => {
               e.stopPropagation(); // Mencegah klik menyebar ke drag
-              if (i === openLoopIndex) {
+              if (loopId === openLoopIndex) {
                   openLoopIndex = -1; // Tutup
               } else {
                   // Tutup function bubble jika ada
                   isFunctionBubbleOpen = false; 
-                  openLoopIndex = i; // Buka loop ini
+                  openLoopIndex = loopId; // Buka loop ini
               }
               renderWorkspace();
           };
           
-          // 1. Counter Click & Drag Prevention
+          // 1. Counter Click & Drag Prevention (FIX Bug 2)
           const counter = b.querySelector(".loop-counter");
           if (counter) {
-              counter.onmousedown = (e) => { e.stopPropagation(); };
+              // Hentikan mousedown agar tidak memicu attachDragEventsToBlock
+              // FIX BUG 2: Hentikan event propagation di mousedown/touchstart agar tidak memulai drag
+              counter.onmousedown = (e) => { e.stopPropagation(); }; 
               
               counter.onclick = (e) => {
                   e.stopPropagation();
 
                   let currentCount = parseInt(b.getAttribute("data-loop-count"));
+                  // Peningkatan/pengurangan count
                   let newCount = currentCount === 5 ? 2 : currentCount + 1;
                   
                   if (newCount === 1) newCount = 2; 
@@ -797,9 +1077,8 @@ function renderWorkspace(isFunctionUpdate = false) {
                   b.setAttribute("data-loop-count", newCount);
                   
                   // Buka bubble saat count diubah
-                  // Tutup function bubble jika ada
                   isFunctionBubbleOpen = false;
-                  openLoopIndex = i; 
+                  openLoopIndex = loopId; 
                   workspaceSlots[i] = b; 
                   renderWorkspace();
               };
@@ -808,7 +1087,7 @@ function renderWorkspace(isFunctionUpdate = false) {
           // 2. Tambahkan Nested Dropup (Bubble) - Dibuat di sini
           let loopDropup = document.createElement("div");
           loopDropup.className = "loop-dropup";
-          loopDropup.id = `loop-dropup-${i}`;
+          loopDropup.id = `loop-dropup-${loopId}`;
           loopDropup.innerHTML = `
               <div class="loop-slot-container">
                   <div class="slot nested-slot" data-index="0"></div>
@@ -823,15 +1102,31 @@ function renderWorkspace(isFunctionUpdate = false) {
                   // KRITIS: Tambahkan index untuk lookup yang lebih mudah saat drag.
                   nestedBlock.setAttribute('data-parent-loop-index', i);
                   nestedBlock.setAttribute('data-nested-index', nestedIndex);
-
-                  nestedSlots[nestedIndex].appendChild(nestedBlock);
-                  cleanPositionStyles(nestedBlock);
-                  attachDragEventsToBlock(nestedBlock); 
+                  
+                  // FIX: Jika block adalah function call, pastikan tampilan visualnya benar
+                  if (nestedBlock.getAttribute("data-type") === "function") {
+                      
+                      // Mengganti konten slot dengan nestedBlock
+                      nestedSlots[nestedIndex].innerHTML = "";
+                      nestedSlots[nestedIndex].appendChild(nestedBlock);
+                      cleanPositionStyles(nestedBlock);
+                      
+                      // Perbarui tampilan visual block Function yang ada di nested slot
+                      createFunctionBlockDisplay(nestedBlock);
+                      
+                      attachDragEventsToBlock(nestedBlock); 
+                      
+                  } else {
+                      // Block normal (jalan, tembak, loop)
+                      nestedSlots[nestedIndex].appendChild(nestedBlock);
+                      cleanPositionStyles(nestedBlock);
+                      attachDragEventsToBlock(nestedBlock); 
+                  }
               }
           });
           
           // 4. MEMPERTAHANKAN STATUS TERBUKA & PINDAH KE BODY (Bug 1 Fix)
-          if (i === openLoopIndex) {
+          if (loopId === openLoopIndex) {
               
               // A. Set ID unik agar bisa dilacak saat drop
               loopDropup.id = 'global-loop-dropup';
@@ -1030,19 +1325,16 @@ function updateBee(dt) {
 
   // Kontrol Animasi Tembak
   if (bee.state === "shoot") {
-      // Jika sudah mencapai frame terakhir, hentikan timer agar frame tetap di terakhir
-      if (bee.frame === anim.frames - 1) {
-          // Hanya jika animasi telah selesai, kembalikan ke idle
-          if (bee.timer > 200) { // Tahan di frame terakhir selama 200ms
-               bee.state = "idle";
-               bee.frame = 0;
-          }
-      } else if (bee.timer > 120) { 
-          // Pindah ke frame berikutnya
-          bee.timer = 0;
-          bee.frame++;
-      }
-      return; // Jangan lakukan update frame idle/walk jika sedang menembak
+    if (bee.timer > 80) {      // 80ms per frame – natural
+      bee.timer = 0;
+      bee.frame++;
+
+      if (bee.frame >= anim.frames) {
+          bee.state = "idle";
+          bee.frame = 0;
+      }
+    }
+    return;
   }
 
   // Animasi Idle/Walk
@@ -1258,16 +1550,16 @@ async function loadMap(index = 0) {
     console.log("MAP LOADED:", MAP_LIST[index]);
 }
 
-function loadProjectile() {
-  const json = fetch(`../Asset/Sprites/projectile.json`).then(r => r.json());
-
+async function loadProjectile() {
+  const json = await fetch(`../Asset/Sprites/projectile.json`).then(r => r.json());
   const img = new Image();
   img.src = `../Asset/Sprites/projectile.png`;
+  await img.decode();
 
   return {
-    img: img,
+    img,
     fw: json.frameWidth,
-    fh: json.fh,
+    fh: json.frameHeight,
     frames: json.frames
   };
 }
@@ -1290,7 +1582,7 @@ function updateProjectiles(dt) {
 function drawProjectiles() {
   if (!projectileAnim) return;
   // Menentukan skala rendering proyektil (4x = 16px)
-  const PROJECTILE_SCALE = 4;
+  const PROJECTILE_SCALE = 2;
   const RENDER_SIZE_W = projectileAnim.fw * PROJECTILE_SCALE;
   const RENDER_SIZE_H = projectileAnim.fh * PROJECTILE_SCALE;
 
@@ -1382,15 +1674,25 @@ async function loadButterflies() {
             const img = new Image();
             img.src = `../Asset/Sprites/Butterfly${color}.png`;
             await img.decode();
+
+            if (typeof json.frameWidth !== 'number' || typeof json.frameHeight !== 'number' || typeof json.frames !== 'number') {
+                console.warn(`Butterfly ${color} JSON missing frameWidth/frameHeight/frames:`, json);
+                continue;
+            }
+
             list.push({
-                img: img, fw: json.frameWidth, fh: json.frameHeight, frames: json.frames
+                img: img,
+                fw: json.frameWidth,
+                fh: json.frameHeight,
+                frames: json.frames
             });
         } catch (err) {
-            console.warn("Butterfly JSON not found:", color);
+            console.warn("Butterfly JSON or image not found / failed to load:", color, err);
         }
     }
     butterflyAnimations = list;
 }
+
 
 function checkProjectileHitEnemy(p) {
     for (let e of enemies) {
@@ -1429,9 +1731,9 @@ function shootProjectile() {
   
   // PERBAIKAN BUG 2: Sesuaikan offset X
   const offsetX = bee.facing === "right"
-    ? offsetDistance // Tembak ke kanan: Offset positif
-    // Tembak ke kiri: Offset negatif MINUS lebar render proyektil
-    : -offsetDistance - PROJECTILE_RENDER_WIDTH; 
+    ? +10
+    : -10 - projectileAnim.fw * PROJECTILE_SCALE;
+
 
   const offsetY = (h * 0.55) - (h / 2);
 
@@ -1541,6 +1843,7 @@ if(btnResetWorkspace) btnResetWorkspace.addEventListener("click", () => {
     workspaceSlots = Array(10).fill(null);
     loopContent = Array(10).fill(null).map(() => Array(2).fill(null));
     functionContent = [null, null]; // Reset Function content
+    functionLoopNestedContent = Array(2).fill(null).map(() => Array(2).fill(null)); // Reset state nested Function Loop
     openLoopIndex = -1;
     isFunctionBubbleOpen = false; // Close function bubble
     renderWorkspace();
@@ -1579,7 +1882,7 @@ function initDropups() {
         { id: "btn-tembak", type: "tembak", label: "🔫" },
         { id: "btn-loop", type: "loop", label: "🔁" },
         { id: "btn-if-else", type: "if-else", label: "2" },
-        { id: "btn-function", type: "function", label: "{}" }, // Label disesuaikan
+        { id: "btn-function", type: "function", label: "Function: {}" }, // Label disesuaikan
     ];
 
     singleBtns.forEach(btnData => {
@@ -1594,6 +1897,13 @@ function initDropups() {
             if (btnData.type === 'function' && e.target.closest('.function-toggle-btn')) {
                  // Biarkan event onclick di renderFunctionToolbar yang mengurusnya
                  return; 
+            }
+            
+            // FIX PENTING: Jika Function Definition Bubble terbuka dan target klik ada di dalamnya,
+            // ini berarti pengguna mencoba menyeret block bersarang. Kita HENTIKAN pembuatan block baru di toolbar.
+            const functionBubble = document.getElementById('function-definition-bubble');
+            if (btnData.type === 'function' && isFunctionBubbleOpen && functionBubble && functionBubble.contains(e.target)) {
+                 return;
             }
             
             const type = btnData.type;
@@ -1626,7 +1936,7 @@ function initDropups() {
             clone.classList.add("drag-shadow");
             clone.style.position = "absolute";
             clone.style.zIndex = 3000; 
-            
+
             // Perbarui tampilan clone function agar sesuai dengan definisi
             if (type === "function") {
                 createFunctionBlockDisplay(clone);
@@ -1744,12 +2054,13 @@ if(btnRun) btnRun.onclick = () => {
                 
                 // Jika nested block adalah function call, expand lagi
                 if (nestedType === "function") {
-                    commandQueue.push(...getFunctionCommands());
+                    nestedCommands.push(...getFunctionCommands());
                 } else if (nestedType === "tembak") {
                     nestedCommands.push({ type: "shoot" });
                 } else if (nestedType === "jalan") {
                     nestedCommands.push({type:"move", dir:nestedBlock.getAttribute("data-direction")});
                 }
+                // Jika nested block adalah loop, itu tidak diizinkan.
             });
             
             // Tambahkan perintah sebanyak repeatCount
@@ -1774,16 +2085,39 @@ if(btnRun) btnRun.onclick = () => {
 
 function getFunctionCommands() {
     const commands = [];
-    functionContent.forEach(nestedBlock => {
+    functionContent.forEach((nestedBlock, funcIndex) => {
         if (!nestedBlock) return;
         const type = nestedBlock.getAttribute("data-type");
+        
         if (type === "tembak") {
             commands.push({ type: "shoot" });
         } else if (type === "jalan") {
             commands.push({type:"move", dir:nestedBlock.getAttribute("data-direction")});
+        } else if (type === "loop") {
+            // Function definition berisi loop
+            const repeatCount = parseInt(nestedBlock.getAttribute("data-loop-count")) || 1;
+            
+            // Ambil anak-anak dari Loop di dalam Function Definition
+            const innerNestedCommands = [];
+            functionLoopNestedContent[funcIndex].forEach(innerBlock => {
+                 if (!innerBlock) return;
+                 const innerType = innerBlock.getAttribute("data-type");
+                 
+                 // Hanya izinkan jalan/tembak di dalam Loop di Function (pembatasan rekursi)
+                 if (innerType === "tembak") {
+                     innerNestedCommands.push({ type: "shoot" });
+                 } else if (innerType === "jalan") {
+                     innerNestedCommands.push({type:"move", dir:innerBlock.getAttribute("data-direction")});
+                 }
+            });
+            
+            // Tambahkan perintah sebanyak repeatCount
+            for (let r = 0; r < repeatCount; r++) {
+                 commands.push(...innerNestedCommands);
+            }
+
         }
-        // Catatan: Function di dalam Function (rekursi) TIDAK didukung di sini 
-        // untuk menghindari kerumitan.
+        // Rekursi (Function Call di dalam Function Definition) DILARANG di drop logic.
     });
     return commands;
 }

@@ -167,7 +167,7 @@ body {
   padding: 8px;
   border-radius: 8px;
   cursor: grab;
-  font-size: 40px;
+  font-size: 38px;
   color: var(--tk-brown);
   line-height: 32px;
 }
@@ -296,34 +296,31 @@ body {
     background-color: var(--tk-function-main);
     color: var(--tk-function-text);
     border: 2px solid var(--tk-function-border);
-    font-size: 18px; /* Ukuran teks untuk 'Function: {}' */
+    /* Ukuran disesuaikan untuk tampilan default besar */
+    font-size: 40px; 
     font-weight: bold;
     line-height: 1.2;
     padding: 2px;
 }
 
 .function-label {
+    /* Tampilan default {} di toolbar */
     font-size: 40px;
-    margin-top: 0;
+    margin-top: -10px;
 }
 
-.function-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+/* Utility class untuk konten function yang terisi */
+.function-content-new {
+    display: flex; 
+    align-items: center; 
     justify-content: center;
-    gap: 2px;
-    font-size: 12px;
-    font-weight: normal;
+    width: 100%;
+    height: 100%;
+    line-height: 1;
+    /* Font size besar untuk ikon */
+    font-size: 38px;
 }
 
-.function-icon-container {
-    display: flex;
-    gap: 1px;
-    align-items: center;
-    justify-content: center;
-    height: 30px;
-}
 
 /* --- FUNCTION DEFINITION BUBBLE (DI TOOLBAR) --- */
 .function-dropup {

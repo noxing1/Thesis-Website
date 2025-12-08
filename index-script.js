@@ -123,7 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // SD → sementara hanya alert
     btnSD.addEventListener("click", () => {
-        alert("Placeholder");
+        window.location.href = "SD/challenge-list.html";
     });
 
 

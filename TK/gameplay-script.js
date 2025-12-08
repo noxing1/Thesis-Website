@@ -29,11 +29,11 @@ let cam = {
 };
 
 const MAP_LIST = [
-    "../Asset/Sprites/Maps/01.json", "../Asset/Sprites/Maps/02.json", 
-    "../Asset/Sprites/Maps/03.json", "../Asset/Sprites/Maps/04.json",
-    "../Asset/Sprites/Maps/05.json", "../Asset/Sprites/Maps/06.json",
-    "../Asset/Sprites/Maps/07.json", "../Asset/Sprites/Maps/08.json",
-    "../Asset/Sprites/Maps/09.json", "../Asset/Sprites/Maps/10.json"
+    "JSON/01.json", "JSON/02.json", 
+    "JSON/03.json", "JSON/04.json",
+    "JSON/05.json", "JSON/06.json",
+    "JSON/07.json", "JSON/08.json",
+    "JSON/09.json", "JSON/10.json"
 ];
 
 let selectedMap = parseInt(localStorage.getItem("selectedMap") || "0");
@@ -268,7 +268,7 @@ function getIconHtml(sourceBlock) {
     const type = sourceBlock.getAttribute('data-type');
     
     // Check if the block is a complex type that needs different rendering logic
-    // Menggunakan font size 38px
+    // Menggunakan font size 28px (Sesuai penyesuaian terbaru)
     const iconFontSize = '28px'; 
     
     if (type === 'loop') {
@@ -963,8 +963,11 @@ function createFunctionBlockDisplay(b) {
     }
     
     // Content state: 🡳 | 🡳 (Bug 3 Fix)
-    // Font size untuk pemisah dikecilkan menjadi 38px, ikon sudah 38px di getIconHtml
-    const displayHtml = innerIcons.join('<span style="font-size: 38px; color: var(--tk-function-text); margin: 0 4px; font-weight: bold;">|</span>');
+    // Font size untuk pemisah dikecilkan menjadi 38px, ikon sudah 28px (Sesuai penyesuaian terbaru)
+    const iconFontSize = '28px';
+    const separatorFontSize = '28px'; // Gunakan ukuran ikon untuk konsistensi pemisah
+    
+    const displayHtml = innerIcons.join(`<span style="font-size: ${separatorFontSize}; color: var(--tk-function-text); margin: 0 4px; font-weight: bold;">|</span>`);
     
     b.innerHTML = `
         <div class="function-content-new">
@@ -1421,7 +1424,7 @@ function triggerWin() {
 
   const btnWin = document.getElementById("btn-kembali-win");
   if(btnWin) btnWin.onclick = () => {
-    window.location.href = "../challenge-list.html";
+    window.location.href = "challenge-list.html";
   };
 }
 
@@ -1836,7 +1839,9 @@ const btnResetManual = document.getElementById("btn-reset-manual");
 if(btnResetManual) btnResetManual.onclick = () => { resetBee(); };
 
 const btnBack = document.getElementById("btn-back");
-if(btnBack) btnBack.onclick = () => { window.location.href = "../challenge-list.html"; };
+if(btnBack) btnBack.onclick = () => { 
+    window.location.href = "challenge-list.html"; 
+};
 
 const btnResetWorkspace = document.getElementById("btn-reset-workspace");
 if(btnResetWorkspace) btnResetWorkspace.addEventListener("click", () => {

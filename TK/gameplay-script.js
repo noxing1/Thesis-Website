@@ -1350,14 +1350,16 @@ function triggerWin() {
   isRunningCommands = false;
   bee.state = "idle";
   
-  // 1. Simpan progres ke database (Hanya jika level belum selesai)
+  // 1. Simpan progres ke database
   let completed = JSON.parse(localStorage.getItem("completedChallenges") || "[]");
   const currentLevelId = selectedMap;
+  let challengesCount = completed.length; // Hitungan dasar untuk Win Window
 
   if (!completed.includes(currentLevelId)) {
+      // PENTING: Hanya panggil fungsi asinkron. Jangan modifikasi array 'completed' di sini.
       writeChallengeComplete(currentLevelId);
-      // Karena writeChallengeComplete async, kita langsung update UI berdasarkan data yang akan datang
-      completed.push(currentLevelId); 
+      // Tambahkan 1 untuk tampilan di Win Window secara optimistis.
+      challengesCount++; 
   }
   
   // 2. Update Win Window Display
@@ -1369,7 +1371,7 @@ function triggerWin() {
   
   // Menampilkan total tantangan yang telah diselesaikan
   const honey = document.getElementById("honey-number");
-  if(honey) honey.innerText = completed.length.toString();
+  if(honey) honey.innerText = challengesCount.toString(); // Gunakan challengesCount yang sudah dihitung
 
   const btnWin = document.getElementById("btn-kembali-win");
   if(btnWin) btnWin.onclick = () => {

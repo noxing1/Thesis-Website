@@ -78,36 +78,9 @@ const CONDITIONAL_DIRS = ['above', 'right', 'left', 'down'];
 function loadConditionalArrows() {
     CONDITIONAL_DIRS.forEach(dir => {
         const img = new Image();
-        // File path sesuai struktur yang Anda berikan
         img.src = `../Asset/Sprites/x-${dir}.png`; 
         conditionalArrowImages[dir] = img;
     });
-}
-
-// NEW: Dimensi spesifik untuk setiap gambar panah agar tidak stretched.
-// Menggunakan skala 1.5x agar gambar terlihat lebih besar di dalam tombol 80x80.
-const CONDITIONAL_IMAGE_DIMS = {
-    'above': { w: 25, h: 53 },
-    'right': { w: 50, h: 27 },
-    'left': { w: 50, h: 27 },
-    'down': { w: 25, h: 54 },
-};
-
-/**
- * Mengatur ukuran gambar panah Conditional agar tidak stretched.
- * @param {HTMLElement} imgElement Elemen <img> panah
- * @param {string} dir Arah ('above', 'right', 'left', 'down')
- * @param {boolean} isSmall Jika true, gunakan skala kecil untuk Direction Picker
- */
-function applyImageDimensions(imgElement, dir, isSmall = false) {
-    const dims = CONDITIONAL_IMAGE_DIMS[dir] || { w: 48, h: 48 }; 
-    const scale = isSmall ? 1.0 : 1.5; // Skala kecil untuk Direction Picker (45x45), Skala besar untuk tombol utama (80x80)
-    
-    imgElement.style.width = `${dims.w * scale}px`;
-    imgElement.style.height = `${dims.h * scale}px`;
-    imgElement.style.maxWidth = '100%';
-    imgElement.style.maxHeight = '100%';
-    imgElement.style.objectFit = 'contain'; // Tambahkan object-fit agar gambar tetap proporsional
 }
 // --- END CONDITIONAL BLOCK ASSETS ---
 
@@ -127,7 +100,7 @@ async function loadBeeAndAssets() {
   beeAnimations.shoot = await loadAnim("shoot");
   projectileAnim = await loadProjectile();
   await loadButterflies();
-  loadConditionalArrows(); // Load aset panah conditional
+  loadConditionalArrows(); 
 }
 
 /* =========================================
@@ -156,35 +129,29 @@ function getTileAt(layerName, px, py) {
   return layer.data[index];
 }
 
-/**
- * Memeriksa apakah ubin di arah yang diberikan dari posisi Lebah saat ini adalah Collider.
- * @param {string} dir Direction ('up', 'down', 'left', 'right')
- * @returns {boolean} True jika ubin Collider terdeteksi di ubin berikutnya.
- */
 function checkColliderInDirection(dir) {
     if (!mapData || !beeAnimations.idle) return false;
     
-    const base = beeAnimations.idle;
-    const w = base.fw * BEE_SCALE;
-    const h = base.fh * BEE_SCALE;
-    const cx = bee.x + w / 2;
-    const cy = bee.y + h / 2;
+    // Konversi posisi pixel lebah ke posisi Grid (Tile Index)
+    // Menggunakan Math.round untuk mendapatkan tile terdekat (tengah tile)
+    const gridX = Math.round(bee.x / DRAW_SIZE);
+    const gridY = Math.round(bee.y / DRAW_SIZE);
     
-    // Periksa titik tengah ubin berikutnya (Ghost Bee Logic)
-    const checkDistance = DRAW_SIZE; 
+    let targetGridX = gridX;
+    let targetGridY = gridY;
     
-    let checkX = cx;
-    let checkY = cy;
-    
-    // Koreksi sedikit offset untuk memastikan lebah tidak dihitung bertabrakan dengan ubinnya sendiri
-    if (dir === "left") checkX -= checkDistance;
-    if (dir === "right") checkX += checkDistance;
-    if (dir === "up") checkY -= checkDistance;
-    if (dir === "down") checkY += checkDistance;
+    if (dir === "left") targetGridX -= 1;
+    if (dir === "right") targetGridX += 1;
+    if (dir === "above" || dir === "up") targetGridY -= 1;
+    if (dir === "down") targetGridY += 1;
 
-    const tile = getTileAt("Collider", checkX, checkY);
+    // Kembalikan ke Pixel untuk fungsi getTileAt (ambil titik tengah tile target)
+    const checkPx = targetGridX * DRAW_SIZE + (DRAW_SIZE / 2);
+    const checkPy = targetGridY * DRAW_SIZE + (DRAW_SIZE / 2);
+
+    const tile = getTileAt("Collider", checkPx, checkPy);
     
-    // Tile > 0 berarti ubin hadir, Tile === -1 berarti di luar batas (juga dianggap dinding)
+    // Tile > 0 artinya ada dinding, -1 artinya di luar peta (juga dinding)
     return tile > 0 || tile === -1;
 }
 
@@ -211,10 +178,10 @@ let isFunctionBubbleOpen = false;
 let functionLoopNestedContent = Array(2).fill(null).map(() => Array(2).fill(null)); 
 // -----------------------------------
 
-// --- CONDITIONAL BLOCK STATE (NEW) ---
-const conditionalNestedContent = new Map(); // Map<Block ID, { nestedBlock: Block | null, checkDir: string }>
+// --- CONDITIONAL BLOCK STATE ---
+const conditionalNestedContent = new Map(); 
 let openConditionalBlockId = null; 
-let conditionalCounter = 0; // Counter untuk ID unik
+let conditionalCounter = 0; 
 // -------------------------------------
 
 let realBlockDetached = false;
@@ -243,9 +210,8 @@ function getBestSlot(block) {
   
   const isDraggingLoop = block.getAttribute("data-type") === "loop";
   const isDraggingFunction = block.getAttribute("data-type") === "function";
-  const isDraggingConditional = block.getAttribute("data-type") === "conditional";
 
-  // --- 1. Mencari slot terbaik di slot utama (Priority 1) ---
+  // 1. Main Slots
   document.querySelectorAll(".workspace-area > .workspace-scroll > .slot").forEach(slot => {
     let ov = getOverlap(block, slot);
     if (ov > bestVal && ov > 0.5) {
@@ -254,14 +220,11 @@ function getBestSlot(block) {
     }
   });
 
-  // --- 2. Mencari slot terbaik di nested slots (Priority 2) ---
-  
-  // 2a. Nested Loop Slots
+  // 2. Nested Slots (Loop)
   if (openLoopIndex !== -1) {
     const activeBubble = document.getElementById('global-loop-dropup');
     if (activeBubble) {
-        // PERBAIKAN BUG CONSTRAINT: Izinkan Conditional di dalam Loop
-        if (!isDraggingLoop && !isDraggingFunction) {
+        if (!isDraggingLoop) { 
             activeBubble.querySelectorAll(".nested-slot").forEach(nestedSlot => {
               let ov = getOverlap(block, nestedSlot);
               if (ov > bestVal && ov > 0.7) { 
@@ -273,15 +236,13 @@ function getBestSlot(block) {
     }
   }
   
-  // 2b. Nested Function Definition Slots
+  // 3. Nested Slots (Function)
   if (isFunctionBubbleOpen) {
-      if (!isDraggingFunction) {
-          const functionBubble = document.getElementById('function-definition-bubble');
-          if (functionBubble) {
+      const functionBubble = document.getElementById('function-definition-bubble');
+      if (functionBubble) {
+          if (!isDraggingFunction) {
               functionBubble.querySelectorAll(".function-nested-slot").forEach(nestedSlot => {
-                  // PERBAIKAN BUG CONSTRAINT: Izinkan Loop dan Conditional di dalam Function
-                  const isComplexBlock = isDraggingConditional || isDraggingLoop;
-                  if (!isDraggingFunction && getOverlap(block, nestedSlot) > 0.5) { 
+                  if (getOverlap(block, nestedSlot) > 0.5) { 
                       bestVal = getOverlap(block, nestedSlot);
                       best = nestedSlot;
                   }
@@ -290,10 +251,9 @@ function getBestSlot(block) {
       }
   }
   
-  // 2c. Nested Conditional Slot (NEW)
+  // 4. Nested Slots (Conditional)
   if (openConditionalBlockId) {
-    // Hanya izinkan block sederhana (jalan/tembak) di dalam Conditional
-    const isDraggingSimple = block.getAttribute("data-type") === "jalan" || block.getAttribute("data-type") === "tembak";
+    const isDraggingSimple = block.getAttribute("data-type") === "jalan" || block.getAttribute("data-type") === "tembak" || block.getAttribute("data-type") === "loop";
     
     if (isDraggingSimple) {
         const activeBubble = document.getElementById('global-conditional-dropup');
@@ -312,9 +272,6 @@ function getBestSlot(block) {
   return best;
 }
 
-/**
- * Membersihkan style posisi inline yang tersisa dari operasi drag.
- */
 function cleanPositionStyles(element) {
     if (element && element.style) {
         element.style.removeProperty('position');
@@ -353,9 +310,6 @@ function createFunctionBlock() {
     return block;
 }
 
-/**
- * Membuat blok Conditional baru (NEW)
- */
 function createConditionalBlock(initialDir = 'above') {
     let block = document.createElement("div");
     block.className = "block";
@@ -367,82 +321,118 @@ function createConditionalBlock(initialDir = 'above') {
     
     conditionalNestedContent.set(blockId, { nestedBlock: null, checkDir: initialDir });
     
-    // --- Konten Awal Block: Ikon "!" saja, Hapus Ikon Arah kecil ---
-    block.innerHTML = `
-        <div class="conditional-content">
-            <span class="conditional-symbol" style="font-size: 40px; color: var(--tk-cond-text);">!</span>
-        </div>
+    block.innerHTML = `!`;
+    block.style.cssText = `
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+        font-weight: bold;
+        color: #fcd34d;
     `;
     return block;
 }
 
-/**
- * Memperbarui tampilan ikon dan tombol toggle pada block Conditional.
- * Ini memastikan Bug 2 teratasi.
- * @param {HTMLElement} b Block Conditional
- * @param {string} blockId ID Block
- * @param {boolean} isOpen Apakah bubble sedang terbuka
- */
+
 function updateConditionalBlockDisplay(b, blockId, isOpen) {
-    // 1. HAPUS SEMUA TOMBOL TOGGLE LAMA
     b.querySelectorAll('.conditional-toggle-btn').forEach(btn => btn.remove());
     
-    // 2. JAMINAN KONTEN INTI HANYA '!'
-    const symbol = b.querySelector('.conditional-symbol');
-    if (!symbol) {
-         b.innerHTML = `<div class="conditional-content"><span class="conditional-symbol" style="font-size: 40px; color: var(--tk-cond-text);">!</span></div>`;
-    }
+    b.innerHTML = `!`;
+    b.style.cssText = `
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+        font-weight: bold;
+        color: #fcd34d;
+        position: relative;
+    `;
     
-    // 3. Tombol Toggle Conditional
     const toggleBtn = document.createElement("div");
     toggleBtn.className = "conditional-toggle-btn";
     toggleBtn.innerText = isOpen ? "✕" : "▼";
+    
+    toggleBtn.style.cssText = `
+        position: absolute; 
+        top: -5px; 
+        right: -5px; 
+        width: 20px; 
+        height: 20px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        background-color: ${isOpen ? '#fecaca' : '#fcd34d'};
+        color: black;
+        border-radius: 50%;
+        font-size: 10px;
+        cursor: pointer;
+        z-index: 20;
+        line-height: 1;
+        border: 1px solid #78350f;
+    `;
+
     b.appendChild(toggleBtn);
     
-    // 4. Logic Klik Toggle
     toggleBtn.onclick = (e) => {
-        e.stopPropagation();
-        if (blockId === openConditionalBlockId) {
-            openConditionalBlockId = null;
-        } else {
-            isFunctionBubbleOpen = false;
-            openLoopIndex = -1;
-            openConditionalBlockId = blockId;
+        e.stopPropagation(); 
+        
+        // Context Logic (Parent)
+        let parentLoopIdAttr = b.getAttribute('data-parent-loop-index');
+        let calculatedParentLoopId = -1;
+
+        if (parentLoopIdAttr !== null && parentLoopIdAttr !== 'null') {
+            if (String(parentLoopIdAttr).startsWith('nested-f')) {
+                calculatedParentLoopId = parentLoopIdAttr; 
+            } else {
+                calculatedParentLoopId = parseInt(parentLoopIdAttr);
+            }
         }
+
+        const isNestedInLoop = calculatedParentLoopId !== -1;
+        const isNestedInFunctionDirectly = !isNestedInLoop && b.closest('#function-definition-bubble') !== null;
+        
+        if (blockId === openConditionalBlockId) {
+            // CLOSE
+            openConditionalBlockId = null;
+            if (isNestedInLoop) {
+                 openLoopIndex = calculatedParentLoopId; 
+            } else if (isNestedInFunctionDirectly) {
+                 isFunctionBubbleOpen = true; 
+            }
+        } else {
+            // OPEN
+            openLoopIndex = -1; 
+            isFunctionBubbleOpen = false;
+            
+            if (isNestedInLoop) { 
+                openLoopIndex = calculatedParentLoopId; 
+            }
+            if (isNestedInFunctionDirectly || (typeof calculatedParentLoopId === 'string' && calculatedParentLoopId.startsWith('nested-f'))) {
+                isFunctionBubbleOpen = true;
+            }
+            
+            openConditionalBlockId = blockId; 
+        }
+        
         renderWorkspace();
     };
 }
 
 
-/**
- * Membuat representasi visual untuk ikon di dalam block Function
- */
 function getIconHtml(sourceBlock) {
     if (!sourceBlock) return '';
     const type = sourceBlock.getAttribute('data-type');
-    
     const iconFontSize = '28px'; 
     
-    if (type === 'loop') {
-         // Warna loop di tema TK/SD
-         return `<span style="font-size: ${iconFontSize}; color: #3a3ad0;">🔁</span>`;
-    }
-    
+    if (type === 'loop') return `<span style="font-size: ${iconFontSize}; color: #3a3ad0;">🔁</span>`;
     if (type === 'jalan') {
         const dir = sourceBlock.getAttribute('data-direction');
         const icon = {up:"🡱", right:"🡲", left:"🡸", down:"🡳"}[dir];
         return `<span style="font-size: ${iconFontSize}; color: var(--sd-text);">${icon}</span>`; 
     }
-    if (type === 'tembak') {
-        return `<span style="font-size: ${iconFontSize}; color: var(--sd-text);">🔫</span>`; 
-    }
-    if (type === 'function') {
-         return `<span style="font-size: ${iconFontSize}; color: var(--sd-function-text);">{}</span>`;
-    }
-    if (type === 'conditional') {
-         // Menggunakan warna oranye
-         return `<span style="font-size: ${iconFontSize}; color: #ff9933;">!</span>`;
-    }
+    if (type === 'tembak') return `<span style="font-size: ${iconFontSize}; color: var(--sd-text);">🔫</span>`; 
+    if (type === 'function') return `<span style="font-size: ${iconFontSize}; color: var(--sd-function-text);">{}</span>`;
+    if (type === 'conditional') return `<span style="font-size: ${iconFontSize}; color: #fcd34d;">!</span>`;
     return '';
 }
 
@@ -456,65 +446,45 @@ function attachDragEventsToBlock(block) {
     e.preventDefault();
     e.stopPropagation();
 
-    // Mencegah drag jika klik berasal dari kontrol internal
-    if (e.target.closest('.loop-counter') || e.target.closest('.loop-toggle-btn') || e.target.closest('.function-toggle-btn') || e.target.closest('.conditional-toggle-btn')) return; 
+    if (e.target.closest('.loop-counter') || e.target.closest('.loop-toggle-btn') || 
+        e.target.closest('.function-toggle-btn') || e.target.closest('.conditional-toggle-btn') ||
+        e.target.closest('.condition-btn')) { 
+         return; 
+    } 
 
     isFromWorkspace = block.closest(".workspace-area") !== null;
     isMovingLoop = block.getAttribute("data-type") === "loop" && isFromWorkspace; 
     
     const isNestedDrag = block.closest('.nested-slot') !== null || block.closest('.function-nested-slot') !== null || block.closest('.conditional-nested-slot') !== null;
-    
     originalNestedIndex = null;
-    
     let dragAborted = false;
     
     if (isNestedDrag) {
-        
         const isFromFunction = block.closest('.function-nested-slot') !== null;
         const isFromConditional = block.closest('.conditional-nested-slot') !== null;
         
-        // --- Drag dari Conditional Slot (NEW) ---
         if (isFromConditional) {
             const parentId = block.getAttribute('data-cond-parent-id');
             const state = conditionalNestedContent.get(parentId);
             originalSlotIndex = parentId; 
             originalNestedIndex = 0; 
-
             if (state) {
                 state.nestedBlock = null;
-                // Tetap buka bubble saat drag dimulai dari nested, untuk kemudahan UX
                 openConditionalBlockId = parentId; 
                 block.setAttribute('data-is-nested', 'true');
             } else {
-                 console.error("[CRITICAL ERROR] Nested Conditional block has inconsistent state/index. Aborting drag.");
-                 dragAborted = true;
-                 renderWorkspace();
+                 dragAborted = true; renderWorkspace();
             }
         }
-        
-        // --- Drag dari Function Slot ---
         else if (isFromFunction) {
             originalSlotIndex = -1;
             originalNestedIndex = parseInt(block.getAttribute('data-nested-index'));
-            
-            let isValidIndex = !isNaN(originalNestedIndex) && originalNestedIndex >= 0 && originalNestedIndex < functionContent.length;
-            
-            if (!isValidIndex) {
-                 console.error("[CRITICAL ERROR] Nested Function block has inconsistent state/index. Aborting drag and forcing render.");
-                 dragAborted = true;
-                 renderWorkspace(); 
+            if (functionContent[originalNestedIndex] && functionContent[originalNestedIndex].getAttribute('data-type') === 'loop') {
+                functionLoopNestedContent[originalNestedIndex] = Array(2).fill(null);
             }
-            
-            if (!dragAborted) {
-                if (functionContent[originalNestedIndex] && functionContent[originalNestedIndex].getAttribute('data-type') === 'loop') {
-                    functionLoopNestedContent[originalNestedIndex] = Array(2).fill(null);
-                }
-                functionContent[originalNestedIndex] = null; 
-                block.setAttribute('data-is-nested', 'true');
-            }
+            functionContent[originalNestedIndex] = null; 
+            block.setAttribute('data-is-nested', 'true');
         } 
-        
-        // --- Drag dari Loop Nested Slot ---
         else {
              const parentLoopId = block.getAttribute('data-parent-loop-index');
              originalNestedIndex = parseInt(block.getAttribute('data-nested-index')); 
@@ -522,75 +492,31 @@ function attachDragEventsToBlock(block) {
              if (typeof parentLoopId === 'string' && parentLoopId.startsWith('nested-f')) {
                   const funcNestedIndex = parseInt(parentLoopId.replace('nested-f', ''));
                   originalSlotIndex = parentLoopId; 
-                  if (!isNaN(originalNestedIndex) && functionLoopNestedContent[funcNestedIndex] && originalNestedIndex >= 0) {
-                      functionLoopNestedContent[funcNestedIndex][originalNestedIndex] = null;
-                  } else {
-                      console.error("[CRITICAL ERROR] Nested Function Loop block has inconsistent state/indices. Aborting drag.");
-                      dragAborted = true;
-                      renderWorkspace();
-                  }
-             } 
-             else {
+                  functionLoopNestedContent[funcNestedIndex][originalNestedIndex] = null;
+             } else {
                   originalSlotIndex = parseInt(parentLoopId);
-                  
-                  let isValidIndex = !isNaN(originalSlotIndex) && originalSlotIndex >= 0 && originalSlotIndex < loopContent.length &&
-                                     !isNaN(originalNestedIndex) && originalNestedIndex >= 0 && originalNestedIndex < (loopContent[originalSlotIndex] ? loopContent[originalSlotIndex].length : 0);
-                  
-                  if (!isValidIndex) {
-                      console.error("[CRITICAL ERROR] Nested Loop block has inconsistent state/indices. Aborting drag and forcing render.");
-                      dragAborted = true;
-                      renderWorkspace();
-                  }
-                  
-                  if (!dragAborted) {
-                       loopContent[originalSlotIndex][originalNestedIndex] = null;
-                  }
+                  loopContent[originalSlotIndex][originalNestedIndex] = null;
              }
-
-             if (!dragAborted) {
-                 block.setAttribute('data-is-nested', 'true');
-             }
+             block.setAttribute('data-is-nested', 'true');
         }
         
-        if (dragAborted) {
-            return; // ABORT DRAG
-        }
+        if (dragAborted) return;
     } else {
-        // Drag dari MAIN SLOT atau TOOLBAR
-        
-        if (openLoopIndex !== -1 && isFromWorkspace) {
-            openLoopIndex = -1;
-        }
-        
-        if (isFunctionBubbleOpen) {
-            isFunctionBubbleOpen = false;
-        }
-        
-        // Clear open conditional ID jika drag dari tempat lain
-        if (openConditionalBlockId && isFromWorkspace) {
-            openConditionalBlockId = null;
-        }
-        
         if (isFromWorkspace) {
             const parentSlot = block.closest(".slot");
             originalSlotIndex = getSlotIndex(parentSlot);
             block.removeAttribute('data-is-nested');
             
-            if (block.getAttribute('data-type') === 'loop') {
-                loopContent[originalSlotIndex] = Array(2).fill(null);
-            }
+            if (block.getAttribute('data-type') === 'loop') loopContent[originalSlotIndex] = Array(2).fill(null);
             if (block.getAttribute('data-type') === 'conditional') { 
                 const blockId = block.getAttribute('data-cond-id');
                 conditionalNestedContent.get(blockId).nestedBlock = null; 
             }
-            
             workspaceSlots[originalSlotIndex] = null; 
         }
     }
 
-
     realBlock = block;
-
     if (block.parentElement) {
       block.parentElement.removeChild(block);
       realBlockDetached = true;
@@ -599,14 +525,11 @@ function attachDragEventsToBlock(block) {
     let clone = block.cloneNode(true);
     clone.classList.add("drag-shadow");
     clone.style.position = "absolute";
-    clone.style.zIndex = 3000; 
-
+    clone.style.zIndex = 4000; 
     currentDrag = clone;
     document.body.appendChild(clone);
-
     clone.style.left = (e.pageX - 35) + "px";
     clone.style.top = (e.pageY - 35) + "px";
-
     window.onmousemove = drag;
     window.onmouseup = drop;
   };
@@ -630,337 +553,151 @@ function drop() {
   let newOpenConditionalBlockId = openConditionalBlockId;
   let wasNestedDrag = blockToPlace.hasAttribute('data-is-nested');
 
-  // 1. GUARANTEED DRAG CLEANUP
   if (currentDrag) currentDrag.remove();
   document.body.classList.remove("dragging-dropitem");
   removeHighlight();
   window.onmousemove = null;
   window.onmouseup = null;
 
-  
-  // 2. Logic Penempatan
   if (target) {
-      
       const isLoopNestedTarget = target.classList.contains("nested-slot");
       const isFunctionNestedTarget = target.classList.contains("function-nested-slot");
       const isConditionalNestedTarget = target.classList.contains("conditional-nested-slot");
 
       if (isLoopNestedTarget || isFunctionNestedTarget || isConditionalNestedTarget) {
-          
-          // --- CONSTRAINT CHECK ---
-          // Block sederhana: jalan, tembak
-          const isSimpleBlock = blockToPlace.getAttribute("data-type") === "jalan" || blockToPlace.getAttribute("data-type") === "tembak";
-          // Block kompleks: loop, conditional, function
           const isComplexBlock = blockToPlace.getAttribute("data-type") !== "jalan" && blockToPlace.getAttribute("data-type") !== "tembak";
           
-          if (isConditionalNestedTarget && isComplexBlock) {
-             shouldRender = wasNestedDrag || isFromWorkspace;
-          } 
-          // PERBAIKAN BUG CONSTRAINT: HANYA function block yang dilarang di function nested slot. Loop dan Conditional diizinkan.
-          else if (isFunctionNestedTarget && (blockToPlace.getAttribute("data-type") === "function")) {
-             shouldRender = wasNestedDrag || isFromWorkspace;
-          } 
-          // PERBAIKAN BUG CONSTRAINT: HANYA loop block dan function block yang dilarang di loop nested slot. Conditional diizinkan.
-          else if (isLoopNestedTarget && (blockToPlace.getAttribute("data-type") === "loop" || blockToPlace.getAttribute("data-type") === "function")) {
-             shouldRender = wasNestedDrag || isFromWorkspace;
-          }
-          
-          // --- PLACEMENT LOGIC ---
+          if (isConditionalNestedTarget && isComplexBlock) shouldRender = wasNestedDrag || isFromWorkspace;
+          else if (isFunctionNestedTarget && blockToPlace.getAttribute("data-type") === "function") shouldRender = wasNestedDrag || isFromWorkspace;
+          else if (isLoopNestedTarget && (blockToPlace.getAttribute("data-type") === "loop")) shouldRender = wasNestedDrag || isFromWorkspace;
           
           else if (isConditionalNestedTarget) {
+              // LOGIKA DROP KE DALAM CONDITIONAL (FIX BUG)
               const parentId = target.getAttribute('data-cond-parent-id');
               const state = conditionalNestedContent.get(parentId);
-              
               if (state) {
-                  const existingNestedBlock = state.nestedBlock;
-
-                  if (existingNestedBlock) {
-                       if (wasNestedDrag) {
-                            if (originalSlotIndex === -1) { 
-                                functionContent[originalNestedIndex] = existingNestedBlock;
-                            } else if (typeof originalSlotIndex === 'string' && originalSlotIndex.startsWith('nested-f')) { 
-                                const funcNestedIndex = parseInt(originalSlotIndex.replace('nested-f', ''));
-                                functionLoopNestedContent[funcNestedIndex][originalNestedIndex] = existingNestedBlock;
-                            } else if (originalSlotIndex !== null && typeof originalSlotIndex === 'number') { 
-                                loopContent[originalSlotIndex][originalNestedIndex] = existingNestedBlock;
-                            } else if (typeof originalSlotIndex === 'string' && originalSlotIndex.startsWith('cond-')) { 
-                                const oldCondState = conditionalNestedContent.get(originalSlotIndex);
-                                if (oldCondState) oldCondState.nestedBlock = existingNestedBlock; 
-                            }
-                       } else if (isFromWorkspace && originalSlotIndex !== null) {
-                           workspaceSlots[originalSlotIndex] = existingNestedBlock;
-                       }
-                  }
-                  
                   state.nestedBlock = blockToPlace;
                   
-                  // NEW: Auto-open Conditional Dropup
+                  // Pastikan Bubble Conditional tetap terbuka
                   newOpenConditionalBlockId = parentId; 
-                  newOpenLoopIndex = -1;
-                  isFunctionBubbleOpen = false;
+                  
+                  // FIX: Jangan tutup parent context (Loop/Function)
+                  // Kita warisi state yang sudah ada
+                  newOpenLoopIndex = openLoopIndex; 
+                  // isFunctionBubbleOpen tetap seperti state global sebelumnya
+                  
                   shouldRender = true;
-              } else {
-                   shouldRender = wasNestedDrag || isFromWorkspace;
               }
-
           }
-          
           else if (isFunctionNestedTarget) {
               const nestedIndex = parseInt(target.getAttribute("data-index"));
               const existingNestedBlock = functionContent[nestedIndex];
-
-              if (existingNestedBlock) {
-                  if (wasNestedDrag) {
-                       if (originalSlotIndex === -1) { 
-                           if (typeof originalSlotIndex === 'string' && String(originalSlotIndex).startsWith('nested-f')) {
-                               const funcNestedIndex = parseInt(originalSlotIndex.replace('nested-f', ''));
-                               functionLoopNestedContent[funcNestedIndex][originalNestedIndex] = existingNestedBlock;
-                           } else {
-                               functionContent[originalNestedIndex] = existingNestedBlock;
-                           }
-                       } else if (originalSlotIndex !== null && typeof originalSlotIndex === 'number') { 
-                           loopContent[originalSlotIndex][originalNestedIndex] = existingNestedBlock;
-                       } else if (typeof originalSlotIndex === 'string' && originalSlotIndex.startsWith('cond-')) {
-                           conditionalNestedContent.get(originalSlotIndex).nestedBlock = existingNestedBlock;
-                       }
-                  } else if (isFromWorkspace && originalSlotIndex !== null) {
-                       workspaceSlots[originalSlotIndex] = existingNestedBlock;
-                  }
-              }
-
+              if (existingNestedBlock && existingNestedBlock.getAttribute('data-type') === 'loop') functionLoopNestedContent[nestedIndex] = Array(2).fill(null);
               functionContent[nestedIndex] = blockToPlace;
               
-              if (blockToPlace.getAttribute("data-type") === "loop") {
-                  newOpenLoopIndex = `nested-f${nestedIndex}`;
-              } else {
-                  if (typeof openLoopIndex === 'string' && openLoopIndex.startsWith('nested-f')) {
-                       newOpenLoopIndex = -1;
-                  }
-              }
-
+              if (blockToPlace.getAttribute("data-type") === "loop") newOpenLoopIndex = `nested-f${nestedIndex}`;
+              
               isFunctionBubbleOpen = true; 
               newOpenConditionalBlockId = null;
               shouldRender = true;
-
           }
-          
           else if (isLoopNestedTarget) {
               let parentLoopId = openLoopIndex; 
               const isFunctionNestedLoop = target.hasAttribute('data-f-parent');
-
               if (parentLoopId !== -1) {
                   const nestedIndex = parseInt(target.getAttribute("data-index"));
-                  
                   if (isFunctionNestedLoop) {
                        const funcNestedIndex = parseInt(String(parentLoopId).replace('nested-f', ''));
-                       const existingNestedBlock = functionLoopNestedContent[funcNestedIndex][nestedIndex];
-
-                       if (existingNestedBlock) {
-                           if (wasNestedDrag) {
-                                if (originalSlotIndex === -1) {
-                                    functionContent[originalNestedIndex] = existingNestedBlock;
-                                } else if (typeof originalSlotIndex === 'string' && String(originalSlotIndex).startsWith('nested-f')) {
-                                    const origFuncIndex = parseInt(originalSlotIndex.replace('nested-f', ''));
-                                    functionLoopNestedContent[origFuncIndex][originalNestedIndex] = existingNestedBlock;
-                                } else if (originalSlotIndex !== null && typeof originalSlotIndex === 'number') {
-                                    loopContent[originalSlotIndex][originalNestedIndex] = existingNestedBlock;
-                                } else if (typeof originalSlotIndex === 'string' && originalSlotIndex.startsWith('cond-')) {
-                                    conditionalNestedContent.get(originalSlotIndex).nestedBlock = existingNestedBlock;
-                                }
-                           } else if (isFromWorkspace && originalSlotIndex !== null) {
-                               workspaceSlots[originalSlotIndex] = existingNestedBlock;
-                           }
-                       }
-                       
                        functionLoopNestedContent[funcNestedIndex][nestedIndex] = blockToPlace;
                        isFunctionBubbleOpen = true; 
-                       newOpenLoopIndex = parentLoopId;
+                       newOpenLoopIndex = parentLoopId; 
                        newOpenConditionalBlockId = null;
                        shouldRender = true;
-                       
                   } else {
-                      const existingNestedBlock = loopContent[parentLoopId][nestedIndex];
-
-                      if (existingNestedBlock) {
-                           if (wasNestedDrag) {
-                                if (originalSlotIndex === -1) {
-                                    functionContent[originalNestedIndex] = existingNestedBlock;
-                                } else if (originalSlotIndex !== null && typeof originalSlotIndex === 'number') {
-                                    loopContent[originalSlotIndex][originalNestedIndex] = existingNestedBlock;
-                                } else if (typeof originalSlotIndex === 'string' && originalSlotIndex.startsWith('cond-')) {
-                                    conditionalNestedContent.get(originalSlotIndex).nestedBlock = existingNestedBlock;
-                                }
-                           } else if (isFromWorkspace && originalSlotIndex !== null) {
-                               workspaceSlots[originalSlotIndex] = existingTargetBlock; // Corrected from existingTargetBlock
-                           }
-                      }
-                      
                       loopContent[parentLoopId][nestedIndex] = blockToPlace;
                       newOpenLoopIndex = parentLoopId;
                       newOpenConditionalBlockId = null;
                       shouldRender = true;
                   }
-              } else {
-                  shouldRender = wasNestedDrag || isFromWorkspace;
               }
           }
-          
       } else {
-          // Drop berhasil ke SLOT UTAMA (Main Workspace)
+          // Main Slot Drop
           const targetIndex = getSlotIndex(target);
           const existingTargetBlock = workspaceSlots[targetIndex];
           
-          if (isFromWorkspace) {
-            if (!wasNestedDrag && originalSlotIndex !== null && originalSlotIndex !== targetIndex && existingTargetBlock) {
-                 if (existingTargetBlock.getAttribute("data-type") === "loop") {
-                      loopContent[originalSlotIndex] = loopContent[targetIndex];
-                  }
-                  
-                  workspaceSlots[originalSlotIndex] = existingTargetBlock;
-                  if (newOpenLoopIndex === targetIndex) newOpenLoopIndex = originalSlotIndex;
-            }
-            else if (wasNestedDrag && existingTargetBlock) {
-                if (existingTargetBlock.getAttribute("data-type") === "loop") {
-                    loopContent[targetIndex] = Array(2).fill(null);
-                }
-                if (existingTargetBlock.getAttribute("data-type") === "conditional") { 
-                    const blockId = existingTargetBlock.getAttribute('data-cond-id');
-                    conditionalNestedContent.get(blockId).nestedBlock = null;
-                }
-            }
-            
-            if (wasNestedDrag) {
-                 blockToPlace.removeAttribute('data-is-nested');
-            }
+          if (isFromWorkspace && !wasNestedDrag && originalSlotIndex !== null) {
+            if (existingTargetBlock && existingTargetBlock.getAttribute("data-type") === "loop") loopContent[originalSlotIndex] = loopContent[targetIndex];
+            workspaceSlots[originalSlotIndex] = existingTargetBlock;
+            if (newOpenLoopIndex === targetIndex) newOpenLoopIndex = originalSlotIndex;
+          } else if (wasNestedDrag) {
+              blockToPlace.removeAttribute('data-is-nested');
           }
           
-          if (existingTargetBlock && blockToPlace.getAttribute("data-type") === "loop") {
-             loopContent[targetIndex] = Array(2).fill(null);
-          }
-          if (existingTargetBlock && blockToPlace.getAttribute("data-type") === "conditional") {
-             conditionalNestedContent.get(existingTargetBlock.getAttribute('data-cond-id')).nestedBlock = null;
-          }
+          if (existingTargetBlock && blockToPlace.getAttribute("data-type") === "loop") loopContent[targetIndex] = Array(2).fill(null);
+          if (existingTargetBlock && blockToPlace.getAttribute("data-type") === "conditional") conditionalNestedContent.get(existingTargetBlock.getAttribute('data-cond-id')).nestedBlock = null;
             
           workspaceSlots[targetIndex] = blockToPlace;
-          
-          if (isFromWorkspace && !wasNestedDrag && blockToPlace.getAttribute('data-type') === 'loop' && originalSlotIndex !== null) {
-              if (originalSlotIndex !== targetIndex) {
-                  loopContent[targetIndex] = loopContent[originalSlotIndex];
-                  loopContent[originalSlotIndex] = Array(2).fill(null);
-              }
+          if (isFromWorkspace && !wasNestedDrag && blockToPlace.getAttribute('data-type') === 'loop' && originalSlotIndex !== targetIndex) {
+               loopContent[targetIndex] = loopContent[originalSlotIndex];
+               loopContent[originalSlotIndex] = Array(2).fill(null);
           }
           
           newOpenLoopIndex = (blockToPlace.getAttribute("data-type") === "loop") ? targetIndex : -1;
+          newOpenConditionalBlockId = null; 
           
-          // NEW: Auto-open Conditional Dropup jika drop ke main slot
-          if (blockToPlace.getAttribute("data-type") === "conditional") {
-              newOpenConditionalBlockId = blockToPlace.getAttribute('data-cond-id');
-              // Tambahkan pemanggilan display update setelah penempatan block baru
-              updateConditionalBlockDisplay(blockToPlace, blockToPlace.getAttribute('data-cond-id'), newOpenConditionalBlockId !== null); 
-          } else {
-              newOpenConditionalBlockId = null;
-          }
-
           isFunctionBubbleOpen = false;
           shouldRender = true;
       }
-
   } else {
-      // Drop gagal (dilepas di luar slot)
-      
-      // Jika berasal dari nested drag, kembalikan ke state awal
-      if (wasNestedDrag && typeof originalSlotIndex === 'string' && originalSlotIndex.startsWith('cond-')) {
+      if (wasNestedDrag) {
           shouldRender = true;
-          newOpenConditionalBlockId = originalSlotIndex; 
           blockToPlace.removeAttribute('data-is-nested');
-      }
-      else if (wasNestedDrag) {
-          shouldRender = true;
-          if (originalSlotIndex === -1 || (typeof originalSlotIndex === 'string' && originalSlotIndex.startsWith('nested-f'))) {
-              isFunctionBubbleOpen = true;
-              if (typeof originalSlotIndex === 'string' && originalSlotIndex.startsWith('nested-f')) { newOpenLoopIndex = originalSlotIndex; }
-          } else if (originalSlotIndex !== null && typeof originalSlotIndex === 'number') { 
-              newOpenLoopIndex = originalSlotIndex; 
-          }
-          blockToPlace.removeAttribute('data-is-nested');
-          
       } 
-      // JIKA BUKAN nested drag, dan berasal dari workspace utama
       else if (isFromWorkspace) {
           shouldRender = true; 
-          if (realBlock.getAttribute('data-type') === 'loop' && originalSlotIndex !== null) {
-             loopContent[originalSlotIndex] = Array(2).fill(null);
-          }
-          if (realBlock.getAttribute('data-type') === 'conditional' && originalSlotIndex !== null) { 
-             conditionalNestedContent.get(realBlock.getAttribute('data-cond-id')).nestedBlock = null;
-          }
+          if (realBlock.getAttribute('data-type') === 'loop' && originalSlotIndex !== null) loopContent[originalSlotIndex] = Array(2).fill(null);
+          if (realBlock.getAttribute('data-type') === 'conditional' && originalSlotIndex !== null) conditionalNestedContent.get(realBlock.getAttribute('data-cond-id')).nestedBlock = null;
       }
-      
-      if (realBlock && realBlock.parentNode === document.body) {
-           realBlock.remove();
-      }
+      if (realBlock && realBlock.parentNode === document.body) realBlock.remove();
   }
   
-  // 3. Final State Reset & Render
   openLoopIndex = newOpenLoopIndex;
   openConditionalBlockId = newOpenConditionalBlockId;
+  currentDrag = null; realBlock = null; isMovingLoop = false; isFromWorkspace = false; originalSlotIndex = null; originalNestedIndex = null;
   
-  currentDrag = null;
-  realBlock = null;
-  isMovingLoop = false;
-  isFromWorkspace = false;
-  originalSlotIndex = null;
-  originalNestedIndex = null;
-  
-  if (shouldRender) {
-      renderWorkspace();
-  }
+  if (shouldRender) renderWorkspace();
 }
 
 function highlightSlots(block) {
   removeHighlight();
-
-  // Highlight Slot Utama
   document.querySelectorAll(".workspace-area > .workspace-scroll > .slot").forEach(slot => {
     if (getOverlap(block, slot) > 0.5) slot.classList.add("highlight");
   });
   
   const isDraggingLoop = block.getAttribute("data-type") === "loop";
   const isDraggingFunction = block.getAttribute("data-type") === "function";
-  const isDraggingConditional = block.getAttribute("data-type") === "conditional";
 
-  // Highlight Nested Slots 
-  
-  // 2a. Nested Loop Slots
-  if (openLoopIndex !== -1) {
-    // PERBAIKAN BUG CONSTRAINT: Izinkan Conditional di dalam Loop
-    if (!isDraggingLoop && !isDraggingFunction) {
-        const activeBubble = document.getElementById('global-loop-dropup');
-        if (activeBubble) {
+  if (openLoopIndex !== -1 && !isDraggingLoop) {
+      const activeBubble = document.getElementById('global-loop-dropup');
+      if (activeBubble) {
             activeBubble.querySelectorAll(".nested-slot").forEach(nestedSlot => {
               if (getOverlap(block, nestedSlot) > 0.7) nestedSlot.classList.add("highlight");
             });
-        }
-    }
-  }
-  
-  // 2b. Nested Function Definition Slots
-  if (isFunctionBubbleOpen) {
-    // PERBAIKAN BUG CONSTRAINT: Izinkan Loop dan Conditional di dalam Function
-      if (!isDraggingFunction) {
-          const functionBubble = document.getElementById('function-definition-bubble');
-          if (functionBubble) {
-              functionBubble.querySelectorAll(".function-nested-slot").forEach(nestedSlot => {
-                  if (!isDraggingFunction && getOverlap(block, nestedSlot) > 0.5) nestedSlot.classList.add("highlight");
-              });
-          }
       }
   }
   
-  // 2c. Nested Conditional Slot (NEW)
+  if (isFunctionBubbleOpen && !isDraggingFunction) {
+      const functionBubble = document.getElementById('function-definition-bubble');
+      if (functionBubble) {
+          functionBubble.querySelectorAll(".function-nested-slot").forEach(nestedSlot => {
+              if (block.getAttribute("data-type") !== "function" && getOverlap(block, nestedSlot) > 0.5) nestedSlot.classList.add("highlight");
+          });
+      }
+  }
+  
   if (openConditionalBlockId) {
-    const isDraggingSimple = block.getAttribute("data-type") === "jalan" || block.getAttribute("data-type") === "tembak";
-    
+    const isDraggingSimple = block.getAttribute("data-type") === "jalan" || block.getAttribute("data-type") === "tembak" || block.getAttribute("data-type") === "loop";
     if (isDraggingSimple) {
         const activeBubble = document.getElementById('global-conditional-dropup');
         if (activeBubble) {
@@ -979,10 +716,7 @@ function removeHighlight() {
 
 // --- FUNCTION RENDERING & SYNC ---
 
-/**
- * Merender bubble konfigurasi untuk Conditional Block (NEW)
- * @param {HTMLElement} b Block Conditional yang sedang aktif
- */
+// REFACTORED CONDITIONAL BUBBLE RENDER
 function renderConditionalBubble(b) { 
     const blockId = b.getAttribute('data-cond-id');
     const state = conditionalNestedContent.get(blockId);
@@ -996,115 +730,83 @@ function renderConditionalBubble(b) {
     condDropup.className = "conditional-dropup";
     condDropup.id = 'global-conditional-dropup';
     
+    // VISIBILITY FIX: Inline styles + High Z-Index
+    condDropup.style.display = "flex";
+    condDropup.style.zIndex = "3000"; 
+    
     const activeDir = state.checkDir;
 
-    // Sederhanakan HTML untuk hanya menampilkan 2 kotak (Tombol Arah dan Slot Block)
+    // LEFT: Button with Icon
+    // RIGHT: Slot
     condDropup.innerHTML = `
-        <div class="condition-btn" data-dir-selected="${activeDir}">
-            <img src="../Asset/Sprites/x-${activeDir}.png" alt="Direction" class="conditional-img">
-            <div class="condition-select-dropup">
-                <div class="direction-item" data-dir="above"><img src="../Asset/Sprites/x-above.png" alt="Above"></div>
-                <div class="direction-item" data-dir="right"><img src="../Asset/Sprites/x-right.png" alt="Right"></div>
-                <div class="direction-item" data-dir="left"><img src="../Asset/Sprites/x-left.png" alt="Left"></div>
-                <div class="direction-item" data-dir="down"><img src="../Asset/Sprites/x-down.png" alt="Down"></div>
-            </div>
+        <div class="condition-btn" id="cond-btn-${blockId}">
+             <img src="../Asset/Sprites/x-${activeDir}.png" alt="${activeDir}" class="cond-icon-main" style="width: 48px; height: 48px; object-fit: contain;">
+             <!-- Secondary Dropup (Hidden by default) -->
+             <div class="condition-select-dropup" id="cond-select-${blockId}" style="display: none;">
+                 <div class="direction-item" data-dir="above"><img src="../Asset/Sprites/x-above.png" style="width: 30px; height: 30px; object-fit: contain;"></div>
+                 <div class="direction-item" data-dir="down"><img src="../Asset/Sprites/x-down.png" style="width: 30px; height: 30px; object-fit: contain;"></div>
+                 <div class="direction-item" data-dir="left"><img src="../Asset/Sprites/x-left.png" style="width: 30px; height: 30px; object-fit: contain;"></div>
+                 <div class="direction-item" data-dir="right"><img src="../Asset/Sprites/x-right.png" style="width: 30px; height: 30px; object-fit: contain;"></div>
+             </div>
         </div>
+        
         <div class="slot conditional-nested-slot" data-index="0" data-cond-parent-id="${blockId}"></div>
     `;
 
     const blockRect = b.getBoundingClientRect();
-    condDropup.style.position = 'fixed';
+    condDropup.style.position = 'absolute';
+    const scrollY = window.scrollY || window.pageYOffset;
+    const scrollX = window.scrollX || window.pageXOffset;
+    const blockAbsoluteTop = blockRect.top + scrollY;
+    const blockAbsoluteLeft = blockRect.left + scrollX;
     
-    // Z-INDEX: Menggunakan 2000 sesuai permintaan.
-    const newTop = blockRect.top - 120;
-    condDropup.style.top = `${Math.max(20, newTop)}px`; 
+    // Position above the block
+    const posY = blockAbsoluteTop - 120; // Adjusted for horizontal bubble height
+    const posX = blockAbsoluteLeft + blockRect.width / 2;
     
-    condDropup.style.left = `${blockRect.left + blockRect.width / 2}px`;
+    condDropup.style.top = `${Math.max(scrollY + 20, posY)}px`; 
+    condDropup.style.left = `${posX}px`;
     condDropup.style.transform = 'translateX(-50%)'; 
-    
-    condDropup.style.zIndex = 2000; 
-    
-    condDropup.style.display = 'flex';
 
     document.body.appendChild(condDropup);
     
-    const condButton = condDropup.querySelector(".condition-btn");
-    const selectDropup = condDropup.querySelector(".condition-select-dropup");
-    const mainImg = condDropup.querySelector(".conditional-img");
+    // ATTACH EVENT LISTENERS
     
-    // NEW: Perbaikan untuk Direction Picker (Secondary Dropup)
-    const directionItems = selectDropup.querySelectorAll('.direction-item');
-
-    // 1. Terapkan dimensi yang benar saat inisialisasi untuk tombol utama
-    if (mainImg) {
-        applyImageDimensions(mainImg, activeDir, false); // false = skala besar
+    // 1. Toggle Direction Picker
+    const mainBtn = condDropup.querySelector(`#cond-btn-${blockId}`);
+    const selectDropup = condDropup.querySelector(`#cond-select-${blockId}`);
+    
+    if (mainBtn && selectDropup) {
+        mainBtn.onmousedown = (e) => { e.stopPropagation(); }; // Prevent drag start
+        mainBtn.onclick = (e) => {
+            e.stopPropagation();
+            const isVisible = selectDropup.style.display === 'flex';
+            selectDropup.style.display = isVisible ? 'none' : 'flex';
+        };
     }
-    
-    // 2. Terapkan dimensi yang benar untuk setiap item di Direction Picker
-    directionItems.forEach(item => {
-        const itemDir = item.getAttribute('data-dir');
-        const itemImg = item.querySelector('img');
-        if (itemImg) {
-            // true = skala kecil
-            applyImageDimensions(itemImg, itemDir, true); 
-        }
-        
+
+    // 2. Select Direction
+    condDropup.querySelectorAll('.direction-item').forEach(item => {
         item.onclick = (e) => {
             e.stopPropagation();
-            const newDir = item.getAttribute('data-dir');
-            
-            // 1. Update State
-            state.checkDir = newDir;
-            b.setAttribute('data-check-dir', newDir); 
-            
-            // PERBAIKAN BUG 2: Pastikan data-dir-selected di tombol utama juga di-update
-            condButton.setAttribute('data-dir-selected', newDir); 
-
-            // 2. Update visual block & button (image)
-            const mainImgToUpdate = condButton.querySelector('.conditional-img');
-            mainImgToUpdate.src = `../Asset/Sprites/x-${newDir}.png`;
-            applyImageDimensions(mainImgToUpdate, newDir, false); // Terapkan dimensi baru (skala besar)
-            
-            // Tutup secondary dropup
-            selectDropup.style.display = 'none';
-            
-            // 3. Tutup bubble conditional dan render ulang workspace (ini akan merender ulang seluruh workspace, termasuk block kondisional itu sendiri)
-            openConditionalBlockId = null;
+            const dir = item.getAttribute('data-dir');
+            state.checkDir = dir;
+            b.setAttribute('data-check-dir', dir); 
+            // Refresh to update icon
             renderWorkspace();
         };
     });
-
-    // Logic untuk Tombol Arah (Secondary Dropup)
-    condButton.onmousedown = (e) => {
-        e.stopPropagation();
-        const isVisible = selectDropup.style.display === 'flex';
-        // Sembunyikan semua dropup sekunder lainnya sebelum menampilkan yang ini
-        document.querySelectorAll(".condition-select-dropup").forEach(d => d.style.display = 'none');
-        selectDropup.style.display = isVisible ? 'none' : 'flex';
-    };
     
-    // Auto-hide secondary dropup saat mouse keluar dari area button/selectDropup
-    condDropup.onmouseleave = () => {
-         setTimeout(() => {
-            if (!condDropup.querySelector(":hover")) {
-                selectDropup.style.display = 'none';
-            }
-         }, 100);
-    };
-
-    // Render Nested Slot Content
+    // 3. Nested Slot Logic
     const nestedSlot = condDropup.querySelector(".conditional-nested-slot");
     const nestedBlock = state.nestedBlock;
 
     if (nestedBlock) {
         nestedBlock.setAttribute('data-cond-parent-id', blockId);
         nestedBlock.setAttribute('data-nested-index', 0);
-
         nestedSlot.appendChild(nestedBlock);
         cleanPositionStyles(nestedBlock);
         attachDragEventsToBlock(nestedBlock);
-        
-        // Update localized text
         if (nestedBlock.getAttribute("data-type") === "jalan") {
              const dir = nestedBlock.getAttribute('data-direction');
              nestedBlock.innerText = getLocalizedBlockText("jalan", dir);
@@ -1121,19 +823,10 @@ function renderFunctionToolbar() {
     const toggleBtn = document.getElementById('function-toggle-btn-toolbar');
 
     if (!btnFunction || !functionBubble || !toggleBtn) return;
-
-    // --- HAPUS BUBBLE LOOP & CONDITIONAL GLOBAL SEBELUM RENDER ULANG ---
-    const globalLoopDropup = document.getElementById('global-loop-dropup');
-    if (globalLoopDropup) globalLoopDropup.remove();
     
-    const globalCondDropup = document.getElementById('global-conditional-dropup');
-    if (globalCondDropup) globalCondDropup.remove();
-    // --- END HAPUS BUBBLE LOOP & CONDITIONAL GLOBAL ---
-
-
-    // 1. Setup Toggle Button
     toggleBtn.innerText = isFunctionBubbleOpen ? "✕" : "▼";
-    // ... color styles (assuming handled by CSS file)
+    toggleBtn.style.backgroundColor = isFunctionBubbleOpen ? '#ccfbf1' : 'var(--tk-function-main)';
+    toggleBtn.style.color = isFunctionBubbleOpen ? 'var(--tk-function-border)' : 'var(--tk-function-text)';
 
     toggleBtn.onclick = (e) => {
         e.stopPropagation();
@@ -1144,17 +837,13 @@ function renderFunctionToolbar() {
         renderWorkspace(true); 
     };
 
-    // 2. Setup Bubble Visibility
     functionBubble.style.display = isFunctionBubbleOpen ? "flex" : "none";
     
-    // 3. Render Slots Content
     const nestedSlots = functionBubble.querySelectorAll(".function-nested-slot");
 
     functionContent.forEach((nestedBlock, nestedIndex) => {
         const slot = nestedSlots[nestedIndex];
         slot.innerHTML = "";
-        const existingDropup = slot.querySelector(".loop-dropup");
-        if (existingDropup) existingDropup.remove();
         
         if (nestedBlock) {
             nestedBlock.setAttribute('data-parent-loop-index', -1); 
@@ -1164,21 +853,30 @@ function renderFunctionToolbar() {
             cleanPositionStyles(nestedBlock);
             attachDragEventsToBlock(nestedBlock); 
             
-            // ... Logic untuk block bersarang (Loop, Conditional) di dalam Function ...
-             if (nestedBlock.getAttribute("data-type") === "conditional") {
+            if (nestedBlock.getAttribute("data-type") === "conditional") {
                 const blockId = nestedBlock.getAttribute('data-cond-id');
-                const isOpen = (blockId === openConditionalBlockId);
-                // PERBAIKAN BUG 3: Tambahkan tombol toggle conditional di dalam function bubble
-                updateConditionalBlockDisplay(nestedBlock, blockId, isOpen);
-
-                if (isOpen) {
-                   renderConditionalBubble(nestedBlock);
-                }
+                updateConditionalBlockDisplay(nestedBlock, blockId, openConditionalBlockId === blockId);
             }
             
-            // ... Loop in Function Logic (Omitted for brevity in this manual integration, assuming logic is present)
             if (nestedBlock.getAttribute("data-type") === "loop") {
-                // RENDER LOOP LOGIC HERE (similar to renderWorkspace loop logic)
+                const loopId = `nested-f${nestedIndex}`;
+                nestedBlock.querySelectorAll('.loop-toggle-btn').forEach(btn => btn.remove());
+                const toggleBtn = document.createElement("div");
+                toggleBtn.className = "loop-toggle-btn";
+                toggleBtn.innerText = (loopId === openLoopIndex) ? "✕" : "▼"; 
+                nestedBlock.appendChild(toggleBtn);
+                
+                toggleBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (loopId === openLoopIndex) openLoopIndex = -1; 
+                    else {
+                        isFunctionBubbleOpen = true; 
+                        openConditionalBlockId = null;
+                        openLoopIndex = loopId; 
+                    }
+                    renderFunctionToolbar();
+                    renderWorkspace(true);
+                };
             } else if (nestedBlock.getAttribute("data-type") === "function") {
                  createFunctionBlockDisplay(nestedBlock);
             }
@@ -1189,37 +887,16 @@ function renderFunctionToolbar() {
 
 function createFunctionBlockDisplay(b) {
     const innerIcons = functionContent.map(getIconHtml).filter(html => html.length > 0);
-    
     if (innerIcons.length === 0) {
         b.innerHTML = `<span style="font-size: 40px; margin-top: -10px;">{}</span>`; 
-        b.style.fontSize = ''; 
-        b.style.padding = '';
-        return; 
+        b.style.fontSize = ''; b.style.padding = ''; return; 
     }
-    
     const separatorFontSize = '28px';
-    
     const displayHtml = innerIcons.join(`<span style="font-size: ${separatorFontSize}; color: var(--sd-function-text); margin: 0 4px; font-weight: bold;">|</span>`);
-    
-    b.innerHTML = `
-        <div class="function-content-new">
-            ${displayHtml}
-        </div>
-    `;
-    b.style.fontSize = '12px'; 
-    b.style.padding = '4px';
-    
+    b.innerHTML = `<div class="function-content-new">${displayHtml}</div>`;
+    b.style.fontSize = '12px'; b.style.padding = '4px';
     const newContent = b.querySelector('.function-content-new');
-    if (newContent) {
-        newContent.style.cssText = `
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            line-height: 1;
-        `;
-    }
+    if (newContent) newContent.style.cssText = `display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; line-height: 1;`;
 }
 
 
@@ -1231,72 +908,130 @@ function createFunctionBlockDisplay(b) {
 function renderWorkspace(isFunctionUpdate = false) {
   let slots = getWorkspaceSlots();
 
-  // --- HAPUS BUBBLE LOOP & CONDITIONAL GLOBAL SEBELUM RENDER ULANG ---
+  // Clear Global Bubbles first
   const globalLoopDropup = document.getElementById('global-loop-dropup');
   if (globalLoopDropup) globalLoopDropup.remove();
-  
   const globalCondDropup = document.getElementById('global-conditional-dropup');
   if (globalCondDropup) globalCondDropup.remove();
-  // --- END HAPUS BUBBLE LOOP & CONDITIONAL GLOBAL ---
 
-  renderFunctionToolbar();
+  renderFunctionToolbar(); // Render function toolbar first
 
+  // Helper function to render loop bubble
+  const renderLoopBubble = (b, loopId, loopContentArr, isFunctionContext = false) => {
+      if (loopId !== openLoopIndex) return;
+
+      let loopDropup = document.createElement("div");
+      loopDropup.className = "loop-dropup";
+      loopDropup.id = 'global-loop-dropup'; // GLOBAL ID
+      loopDropup.innerHTML = `
+          <div class="loop-slot-container">
+              <div class="slot nested-slot" data-index="0" ${isFunctionContext ? 'data-f-parent="true"' : ''}></div>
+              <div class="slot nested-slot" data-index="1" ${isFunctionContext ? 'data-f-parent="true"' : ''}></div>
+          </div>
+      `;
+
+      const nestedSlots = loopDropup.querySelectorAll(".nested-slot");
+      loopContentArr.forEach((nestedBlock, nestedIndex) => {
+          if (nestedBlock) {
+              nestedBlock.setAttribute('data-parent-loop-index', loopId);
+              nestedBlock.setAttribute('data-nested-index', nestedIndex);
+              
+              nestedSlots[nestedIndex].appendChild(nestedBlock);
+              cleanPositionStyles(nestedBlock);
+              
+              if (nestedBlock.getAttribute("data-type") === "jalan") {
+                   const dir = nestedBlock.getAttribute('data-direction');
+                   nestedBlock.innerText = getLocalizedBlockText("jalan", dir);
+              } else if (nestedBlock.getAttribute("data-type") === "tembak") {
+                   nestedBlock.innerText = getLocalizedBlockText("tembak");
+              } else if (nestedBlock.getAttribute("data-type") === "conditional") {
+                   const blockId = nestedBlock.getAttribute('data-cond-id');
+                   updateConditionalBlockDisplay(nestedBlock, blockId, openConditionalBlockId === blockId);
+                   if (openConditionalBlockId === blockId) {
+                        setTimeout(() => renderConditionalBubble(nestedBlock), 0);
+                   }
+              } else if (nestedBlock.getAttribute("data-type") === "function") {
+                   createFunctionBlockDisplay(nestedBlock);
+              }
+              attachDragEventsToBlock(nestedBlock); 
+          }
+      });
+
+      const blockRect = b.getBoundingClientRect();
+      loopDropup.style.position = 'absolute';
+      const scrollY = window.scrollY || window.pageYOffset;
+      const scrollX = window.scrollX || window.pageXOffset;
+      const blockAbsoluteTop = blockRect.top + scrollY;
+      const blockAbsoluteLeft = blockRect.left + scrollX;
+      const posY = blockAbsoluteTop - 105; 
+      const posX = blockAbsoluteLeft + blockRect.width / 2;
+      
+      loopDropup.style.top = `${Math.max(scrollY + 20, posY)}px`; 
+      loopDropup.style.left = `${posX}px`;
+      loopDropup.style.transform = 'translateX(-50%)'; 
+      loopDropup.style.zIndex = 2000; 
+
+      document.body.appendChild(loopDropup);
+      loopDropup.style.display = "flex";
+  };
+
+
+  // 1. Check & Render Nested Loops/Conditionals inside Function Toolbar
+  if (isFunctionBubbleOpen) {
+      functionContent.forEach((nestedBlock, nestedIndex) => {
+          if (!nestedBlock) return;
+          
+          if (nestedBlock.getAttribute("data-type") === "loop") {
+               const loopId = `nested-f${nestedIndex}`;
+               renderLoopBubble(nestedBlock, loopId, functionLoopNestedContent[nestedIndex], true);
+          } else if (nestedBlock.getAttribute("data-type") === "conditional") {
+              // Ensure conditional bubble renders even if inside function
+               const blockId = nestedBlock.getAttribute('data-cond-id');
+               if (blockId === openConditionalBlockId) {
+                   setTimeout(() => renderConditionalBubble(nestedBlock), 0);
+               }
+          }
+      });
+  }
+
+
+  // 2. Render Main Workspace
   slots.forEach((slot, i) => {
-    
     let b = workspaceSlots[i];
     
     if (isFunctionUpdate && b && b.getAttribute("data-type") === "function") {
-         createFunctionBlockDisplay(b);
-         return; 
+         createFunctionBlockDisplay(b); return; 
     }
     
     slot.innerHTML = "";
-    
-    const existingDropup = slot.querySelector(".loop-dropup");
-    if (existingDropup) existingDropup.remove();
-
     if (b) {
       slot.appendChild(b);
       cleanPositionStyles(b);
       attachDragEventsToBlock(b);
 
-      // --- LOGIKA KHUSUS FUNCTION BLOCK INSTANCES ---
-      if (b.getAttribute("data-type") === "function") {
-          createFunctionBlockDisplay(b);
-      }
+      if (b.getAttribute("data-type") === "function") createFunctionBlockDisplay(b);
       
-      // --- LOGIKA KHUSUS CONDITIONAL BLOCK (NEW) ---
       if (b.getAttribute("data-type") === "conditional") {
           const blockId = b.getAttribute('data-cond-id');
-          const isOpen = (blockId === openConditionalBlockId);
-          
-          // PERBAIKAN BUG 2 & 3: Panggil fungsi display update untuk tombol toggle dan tampilan.
-          updateConditionalBlockDisplay(b, blockId, isOpen);
-
-          // 4. Render Bubble jika aktif
-          if (isOpen) {
-              renderConditionalBubble(b);
+          updateConditionalBlockDisplay(b, blockId, openConditionalBlockId === blockId);
+          // Defer render to ensure DOM is ready
+          if (blockId === openConditionalBlockId) {
+             setTimeout(() => renderConditionalBubble(b), 0);
           }
       }
       
-      // --- LOGIKA KHUSUS LOOP ---
       if (b.getAttribute("data-type") === "loop") {
-          
-          const loopId = i;
-          
-          // Tombol Toggle Loop
+          const loopId = i; 
+          b.querySelectorAll('.loop-toggle-btn').forEach(btn => btn.remove());
           const toggleBtn = document.createElement("div");
           toggleBtn.className = "loop-toggle-btn";
           toggleBtn.innerText = (loopId === openLoopIndex) ? "✕" : "▼";
-          // HAPUS Tombol lama jika ada
-          b.querySelectorAll('.loop-toggle-btn').forEach(btn => btn.remove());
           b.appendChild(toggleBtn);
           
           toggleBtn.onclick = (e) => {
               e.stopPropagation();
-              if (loopId === openLoopIndex) {
-                  openLoopIndex = -1;
-              } else {
+              if (loopId === openLoopIndex) openLoopIndex = -1;
+              else {
                   isFunctionBubbleOpen = false;
                   openConditionalBlockId = null;
                   openLoopIndex = loopId;
@@ -1304,7 +1039,6 @@ function renderWorkspace(isFunctionUpdate = false) {
               renderWorkspace();
           };
           
-          // Counter Click Logic
           const counter = b.querySelector(".loop-counter");
           if (counter) {
               counter.onmousedown = (e) => { e.stopPropagation(); }; 
@@ -1313,76 +1047,20 @@ function renderWorkspace(isFunctionUpdate = false) {
                    let currentCount = parseInt(b.getAttribute("data-loop-count"));
                    let newCount = currentCount === 5 ? 2 : currentCount + 1;
                    if (newCount === 1) newCount = 2; 
-
                    b.setAttribute("data-loop-count", newCount);
-                   
                    isFunctionBubbleOpen = false;
                    openConditionalBlockId = null;
                    openLoopIndex = loopId; 
                    workspaceSlots[i] = b; 
                    renderWorkspace();
               };
+               counter.innerText = b.getAttribute("data-loop-count");
           }
 
-          // Render Loop Bubble
-          let loopDropup = document.createElement("div");
-          loopDropup.className = "loop-dropup";
-          loopDropup.id = `loop-dropup-${loopId}`;
-          loopDropup.innerHTML = `
-              <div class="loop-slot-container">
-                  <div class="slot nested-slot" data-index="0"></div>
-                  <div class="slot nested-slot" data-index="1"></div>
-              </div>
-          `;
-          
-          const nestedSlots = loopDropup.querySelectorAll(".nested-slot");
-          loopContent[i].forEach((nestedBlock, nestedIndex) => {
-              if (nestedBlock) {
-                  nestedBlock.setAttribute('data-parent-loop-index', i);
-                  nestedBlock.setAttribute('data-nested-index', nestedIndex);
-                  
-                  nestedSlots[nestedIndex].appendChild(nestedBlock);
-                  cleanPositionStyles(nestedBlock);
-                  
-                  if (nestedBlock.getAttribute("data-type") === "jalan") {
-                       const dir = nestedBlock.getAttribute('data-direction');
-                       nestedBlock.innerText = getLocalizedBlockText("jalan", dir);
-                  } else if (nestedBlock.getAttribute("data-type") === "tembak") {
-                       nestedBlock.innerText = getLocalizedBlockText("tembak");
-                  } else if (nestedBlock.getAttribute("data-type") === "conditional") {
-                        // PERBAIKAN BUG 3: Tambahkan tombol toggle conditional di dalam loop bubble
-                       const blockId = nestedBlock.getAttribute('data-cond-id');
-                       const isOpen = (blockId === openConditionalBlockId);
-                       updateConditionalBlockDisplay(nestedBlock, blockId, isOpen);
-
-                       if (isOpen) {
-                          renderConditionalBubble(nestedBlock);
-                       }
-                  }
-
-                  attachDragEventsToBlock(nestedBlock); 
-              }
-          });
-          
-          if (loopId === openLoopIndex) {
-              
-              loopDropup.id = 'global-loop-dropup';
-              const blockRect = b.getBoundingClientRect();
-              
-              loopDropup.style.position = 'fixed';
-              loopDropup.style.top = `${blockRect.top - 105}px`; 
-              loopDropup.style.left = `${blockRect.left + blockRect.width / 2}px`;
-              loopDropup.style.transform = 'translateX(-50%)'; 
-              loopDropup.style.zIndex = 2000; 
-
-              document.body.appendChild(loopDropup);
-              loopDropup.style.display = "flex";
-          }
+          renderLoopBubble(b, loopId, loopContent[i], false);
 
           const counterDisplay = b.querySelector(".loop-counter");
-          if(counterDisplay) {
-            counterDisplay.innerText = b.getAttribute("data-loop-count");
-          }
+          if(counterDisplay) counterDisplay.innerText = b.getAttribute("data-loop-count");
       } else {
          if (i === openLoopIndex) { openLoopIndex = -1; }
       }
@@ -1495,7 +1173,6 @@ function drawTileFromTileset(gid, worldX, worldY) {
   if(typeof ctx !== 'undefined') {
     ctx.save();
     ctx.translate(worldX, worldY);
-    // Transform logic (flippedH, flippedV, flippedD) is here
     ctx.drawImage(
       ts.img,
       sx, sy, TILE_SIZE, TILE_SIZE,
@@ -2120,10 +1797,6 @@ function initDropups() {
             clone.style.position = "absolute";
             clone.style.zIndex = 3000; 
 
-            if (type === "function") {
-                createFunctionBlockDisplay(clone);
-            }
-
             currentDrag = clone;
             document.body.appendChild(clone);
 
@@ -2176,10 +1849,6 @@ function initDropups() {
         clone.classList.add("drag-shadow");
         clone.style.position = "absolute";
         clone.style.zIndex = 3000; 
-
-        if (type === "function") {
-             createFunctionBlockDisplay(clone);
-        }
 
         currentDrag = clone;
         document.body.appendChild(clone);
@@ -2256,10 +1925,12 @@ function getBlockCommands(b) {
         const blockId = b.getAttribute("data-cond-id");
         const state = conditionalNestedContent.get(blockId);
         
+        // PUSH COMMAND 'check_condition'
         if (state && state.nestedBlock) {
             commands.push({
                 type: "check_condition",
                 checkDir: state.checkDir,
+                // Rekursif: Isi perintah yang akan dijalankan jika kondisi TRUE
                 nestedCommands: getBlockCommands(state.nestedBlock) 
             });
         }
@@ -2319,16 +1990,18 @@ function runNextCommand() {
         return runNextCommand(); 
     }
     
-    // --- Conditional Check (NEW) ---
+    // --- Conditional Check (IMPLEMENTASI LOGIKA UTAMA) ---
     if (cmd.type === "check_condition") {
+        // Cek apakah ada dinding di arah tersebut RELATIF terhadap posisi Bee saat ini
         if (checkColliderInDirection(cmd.checkDir)) {
-            // Kondisi Benar: Sisipkan perintah dan break loop
+            // JIKA BENAR: Sisipkan perintah nested ke DEPAN antrian
+            // Sehingga perintah tersebut langsung dijalankan berikutnya
             commandQueue.unshift(...cmd.nestedCommands);
-            commandQueue.push({ type: "break_loop" }); 
             
+            // Lanjut eksekusi
             return runNextCommand();
         } else {
-            // Kondisi Salah: Lanjutkan
+            // JIKA SALAH: Abaikan dan lanjut ke perintah berikutnya
             return runNextCommand();
         }
     }

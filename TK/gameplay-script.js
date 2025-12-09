@@ -83,6 +83,32 @@ function loadConditionalArrows() {
         conditionalArrowImages[dir] = img;
     });
 }
+
+// NEW: Dimensi spesifik untuk setiap gambar panah agar tidak stretched.
+// Menggunakan skala 1.5x agar gambar terlihat lebih besar di dalam tombol 80x80.
+const CONDITIONAL_IMAGE_DIMS = {
+    'above': { w: 25, h: 53 },
+    'right': { w: 50, h: 27 },
+    'left': { w: 50, h: 27 },
+    'down': { w: 25, h: 54 },
+};
+
+/**
+ * Mengatur ukuran gambar panah Conditional agar tidak stretched.
+ * @param {HTMLElement} imgElement Elemen <img> panah
+ * @param {string} dir Arah ('above', 'right', 'left', 'down')
+ * @param {boolean} isSmall Jika true, gunakan skala kecil untuk Direction Picker
+ */
+function applyImageDimensions(imgElement, dir, isSmall = false) {
+    const dims = CONDITIONAL_IMAGE_DIMS[dir] || { w: 48, h: 48 }; 
+    const scale = isSmall ? 1.0 : 1.5; // Skala kecil untuk Direction Picker (45x45), Skala besar untuk tombol utama (80x80)
+    
+    imgElement.style.width = `${dims.w * scale}px`;
+    imgElement.style.height = `${dims.h * scale}px`;
+    imgElement.style.maxWidth = '100%';
+    imgElement.style.maxHeight = '100%';
+    imgElement.style.objectFit = 'contain'; // Tambahkan object-fit agar gambar tetap proporsional
+}
 // --- END CONDITIONAL BLOCK ASSETS ---
 
 
@@ -234,7 +260,8 @@ function getBestSlot(block) {
   if (openLoopIndex !== -1) {
     const activeBubble = document.getElementById('global-loop-dropup');
     if (activeBubble) {
-        if (!isDraggingLoop && !isDraggingFunction && !isDraggingConditional) {
+        // PERBAIKAN BUG CONSTRAINT: Izinkan Conditional di dalam Loop
+        if (!isDraggingLoop && !isDraggingFunction) {
             activeBubble.querySelectorAll(".nested-slot").forEach(nestedSlot => {
               let ov = getOverlap(block, nestedSlot);
               if (ov > bestVal && ov > 0.7) { 
@@ -252,8 +279,9 @@ function getBestSlot(block) {
           const functionBubble = document.getElementById('function-definition-bubble');
           if (functionBubble) {
               functionBubble.querySelectorAll(".function-nested-slot").forEach(nestedSlot => {
-                  const isCondOrLoop = isDraggingConditional || isDraggingLoop;
-                  if (!isCondOrLoop && getOverlap(block, nestedSlot) > 0.5) { 
+                  // PERBAIKAN BUG CONSTRAINT: Izinkan Loop dan Conditional di dalam Function
+                  const isComplexBlock = isDraggingConditional || isDraggingLoop;
+                  if (!isDraggingFunction && getOverlap(block, nestedSlot) > 0.5) { 
                       bestVal = getOverlap(block, nestedSlot);
                       best = nestedSlot;
                   }
@@ -335,22 +363,54 @@ function createConditionalBlock(initialDir = 'above') {
     
     const blockId = `cond-${conditionalCounter++}`;
     block.setAttribute("data-cond-id", blockId);
-    block.setAttribute("data-check-dir", initialDir); // Simpan arah di atribut
+    block.setAttribute("data-check-dir", initialDir); 
     
-    // Initialize nested content state
     conditionalNestedContent.set(blockId, { nestedBlock: null, checkDir: initialDir });
     
-    // Visual yang lebih sederhana: hanya tanda seru + Ikon arah awal
+    // --- Konten Awal Block: Ikon "!" saja, Hapus Ikon Arah kecil ---
     block.innerHTML = `
         <div class="conditional-content">
             <span class="conditional-symbol" style="font-size: 40px; color: var(--tk-cond-text);">!</span>
-            <!-- Ikon arah awal ditambahkan di sini, untuk dipickup di renderWorkspace -->
-            <div class="conditional-dir-icon" style="position: absolute; right: 8px; bottom: 8px;">
-                <img src="../Asset/Sprites/x-${initialDir}.png" alt="Direction" class="conditional-img" style="width: 20px; height: 20px;">
-            </div>
         </div>
     `;
     return block;
+}
+
+/**
+ * Memperbarui tampilan ikon dan tombol toggle pada block Conditional.
+ * Ini memastikan Bug 2 teratasi.
+ * @param {HTMLElement} b Block Conditional
+ * @param {string} blockId ID Block
+ * @param {boolean} isOpen Apakah bubble sedang terbuka
+ */
+function updateConditionalBlockDisplay(b, blockId, isOpen) {
+    // 1. HAPUS SEMUA TOMBOL TOGGLE LAMA
+    b.querySelectorAll('.conditional-toggle-btn').forEach(btn => btn.remove());
+    
+    // 2. JAMINAN KONTEN INTI HANYA '!'
+    const symbol = b.querySelector('.conditional-symbol');
+    if (!symbol) {
+         b.innerHTML = `<div class="conditional-content"><span class="conditional-symbol" style="font-size: 40px; color: var(--tk-cond-text);">!</span></div>`;
+    }
+    
+    // 3. Tombol Toggle Conditional
+    const toggleBtn = document.createElement("div");
+    toggleBtn.className = "conditional-toggle-btn";
+    toggleBtn.innerText = isOpen ? "✕" : "▼";
+    b.appendChild(toggleBtn);
+    
+    // 4. Logic Klik Toggle
+    toggleBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (blockId === openConditionalBlockId) {
+            openConditionalBlockId = null;
+        } else {
+            isFunctionBubbleOpen = false;
+            openLoopIndex = -1;
+            openConditionalBlockId = blockId;
+        }
+        renderWorkspace();
+    };
 }
 
 
@@ -588,15 +648,20 @@ function drop() {
       if (isLoopNestedTarget || isFunctionNestedTarget || isConditionalNestedTarget) {
           
           // --- CONSTRAINT CHECK ---
+          // Block sederhana: jalan, tembak
+          const isSimpleBlock = blockToPlace.getAttribute("data-type") === "jalan" || blockToPlace.getAttribute("data-type") === "tembak";
+          // Block kompleks: loop, conditional, function
           const isComplexBlock = blockToPlace.getAttribute("data-type") !== "jalan" && blockToPlace.getAttribute("data-type") !== "tembak";
           
           if (isConditionalNestedTarget && isComplexBlock) {
              shouldRender = wasNestedDrag || isFromWorkspace;
           } 
-          else if (isFunctionNestedTarget && (blockToPlace.getAttribute("data-type") === "function" || isComplexBlock)) {
+          // PERBAIKAN BUG CONSTRAINT: HANYA function block yang dilarang di function nested slot. Loop dan Conditional diizinkan.
+          else if (isFunctionNestedTarget && (blockToPlace.getAttribute("data-type") === "function")) {
              shouldRender = wasNestedDrag || isFromWorkspace;
           } 
-          else if (isLoopNestedTarget && (blockToPlace.getAttribute("data-type") === "loop" || blockToPlace.getAttribute("data-type") === "conditional" || blockToPlace.getAttribute("data-type") === "function")) {
+          // PERBAIKAN BUG CONSTRAINT: HANYA loop block dan function block yang dilarang di loop nested slot. Conditional diizinkan.
+          else if (isLoopNestedTarget && (blockToPlace.getAttribute("data-type") === "loop" || blockToPlace.getAttribute("data-type") === "function")) {
              shouldRender = wasNestedDrag || isFromWorkspace;
           }
           
@@ -620,7 +685,7 @@ function drop() {
                                 loopContent[originalSlotIndex][originalNestedIndex] = existingNestedBlock;
                             } else if (typeof originalSlotIndex === 'string' && originalSlotIndex.startsWith('cond-')) { 
                                 const oldCondState = conditionalNestedContent.get(originalSlotIndex);
-                                if (oldCondState) oldCondState.nestedBlock = existingNestedBlock;
+                                if (oldCondState) oldCondState.nestedBlock = existingNestedBlock; 
                             }
                        } else if (isFromWorkspace && originalSlotIndex !== null) {
                            workspaceSlots[originalSlotIndex] = existingNestedBlock;
@@ -726,7 +791,7 @@ function drop() {
                                     conditionalNestedContent.get(originalSlotIndex).nestedBlock = existingNestedBlock;
                                 }
                            } else if (isFromWorkspace && originalSlotIndex !== null) {
-                               workspaceSlots[originalSlotIndex] = existingNestedBlock;
+                               workspaceSlots[originalSlotIndex] = existingTargetBlock; // Corrected from existingTargetBlock
                            }
                       }
                       
@@ -790,6 +855,8 @@ function drop() {
           // NEW: Auto-open Conditional Dropup jika drop ke main slot
           if (blockToPlace.getAttribute("data-type") === "conditional") {
               newOpenConditionalBlockId = blockToPlace.getAttribute('data-cond-id');
+              // Tambahkan pemanggilan display update setelah penempatan block baru
+              updateConditionalBlockDisplay(blockToPlace, blockToPlace.getAttribute('data-cond-id'), newOpenConditionalBlockId !== null); 
           } else {
               newOpenConditionalBlockId = null;
           }
@@ -866,7 +933,8 @@ function highlightSlots(block) {
   
   // 2a. Nested Loop Slots
   if (openLoopIndex !== -1) {
-    if (!isDraggingLoop && !isDraggingFunction && !isDraggingConditional) {
+    // PERBAIKAN BUG CONSTRAINT: Izinkan Conditional di dalam Loop
+    if (!isDraggingLoop && !isDraggingFunction) {
         const activeBubble = document.getElementById('global-loop-dropup');
         if (activeBubble) {
             activeBubble.querySelectorAll(".nested-slot").forEach(nestedSlot => {
@@ -878,12 +946,12 @@ function highlightSlots(block) {
   
   // 2b. Nested Function Definition Slots
   if (isFunctionBubbleOpen) {
+    // PERBAIKAN BUG CONSTRAINT: Izinkan Loop dan Conditional di dalam Function
       if (!isDraggingFunction) {
           const functionBubble = document.getElementById('function-definition-bubble');
           if (functionBubble) {
               functionBubble.querySelectorAll(".function-nested-slot").forEach(nestedSlot => {
-                  const isCondOrLoop = isDraggingConditional || isDraggingLoop;
-                  if (!isCondOrLoop && getOverlap(block, nestedSlot) > 0.5) nestedSlot.classList.add("highlight");
+                  if (!isDraggingFunction && getOverlap(block, nestedSlot) > 0.5) nestedSlot.classList.add("highlight");
               });
           }
       }
@@ -946,16 +1014,65 @@ function renderConditionalBubble(b) {
 
     const blockRect = b.getBoundingClientRect();
     condDropup.style.position = 'fixed';
-    // Posisikan di atas block, disesuaikan agar tidak terlalu tinggi
-    condDropup.style.top = `${blockRect.top - 120}px`; 
+    
+    // Z-INDEX: Menggunakan 2000 sesuai permintaan.
+    const newTop = blockRect.top - 120;
+    condDropup.style.top = `${Math.max(20, newTop)}px`; 
+    
     condDropup.style.left = `${blockRect.left + blockRect.width / 2}px`;
     condDropup.style.transform = 'translateX(-50%)'; 
+    
     condDropup.style.zIndex = 2000; 
+    
+    condDropup.style.display = 'flex';
 
     document.body.appendChild(condDropup);
     
     const condButton = condDropup.querySelector(".condition-btn");
     const selectDropup = condDropup.querySelector(".condition-select-dropup");
+    const mainImg = condDropup.querySelector(".conditional-img");
+    
+    // NEW: Perbaikan untuk Direction Picker (Secondary Dropup)
+    const directionItems = selectDropup.querySelectorAll('.direction-item');
+
+    // 1. Terapkan dimensi yang benar saat inisialisasi untuk tombol utama
+    if (mainImg) {
+        applyImageDimensions(mainImg, activeDir, false); // false = skala besar
+    }
+    
+    // 2. Terapkan dimensi yang benar untuk setiap item di Direction Picker
+    directionItems.forEach(item => {
+        const itemDir = item.getAttribute('data-dir');
+        const itemImg = item.querySelector('img');
+        if (itemImg) {
+            // true = skala kecil
+            applyImageDimensions(itemImg, itemDir, true); 
+        }
+        
+        item.onclick = (e) => {
+            e.stopPropagation();
+            const newDir = item.getAttribute('data-dir');
+            
+            // 1. Update State
+            state.checkDir = newDir;
+            b.setAttribute('data-check-dir', newDir); 
+            
+            // PERBAIKAN BUG 2: Pastikan data-dir-selected di tombol utama juga di-update
+            condButton.setAttribute('data-dir-selected', newDir); 
+
+            // 2. Update visual block & button (image)
+            const mainImgToUpdate = condButton.querySelector('.conditional-img');
+            mainImgToUpdate.src = `../Asset/Sprites/x-${newDir}.png`;
+            applyImageDimensions(mainImgToUpdate, newDir, false); // Terapkan dimensi baru (skala besar)
+            
+            // Tutup secondary dropup
+            selectDropup.style.display = 'none';
+            
+            // 3. Tutup bubble conditional dan render ulang workspace (ini akan merender ulang seluruh workspace, termasuk block kondisional itu sendiri)
+            openConditionalBlockId = null;
+            renderWorkspace();
+        };
+    });
 
     // Logic untuk Tombol Arah (Secondary Dropup)
     condButton.onmousedown = (e) => {
@@ -965,28 +1082,6 @@ function renderConditionalBubble(b) {
         document.querySelectorAll(".condition-select-dropup").forEach(d => d.style.display = 'none');
         selectDropup.style.display = isVisible ? 'none' : 'flex';
     };
-
-    // Pindah ke slot utama, lalu pilih arah baru
-    condDropup.querySelectorAll('.direction-item').forEach(btn => {
-        btn.onclick = (e) => {
-            e.stopPropagation();
-            const newDir = btn.getAttribute('data-dir');
-            
-            // 1. Update State
-            state.checkDir = newDir;
-            b.setAttribute('data-check-dir', newDir); 
-
-            // 2. Update visual block & button (image)
-            const img = b.querySelector('.conditional-img'); // Di block utama
-            if (img) img.src = `../Asset/Sprites/x-${newDir}.png`;
-            
-            condButton.querySelector('.conditional-img').src = `../Asset/Sprites/x-${newDir}.png`;
-            
-            // 3. Tutup bubble conditional dan render ulang
-            openConditionalBlockId = null;
-            renderWorkspace();
-        };
-    });
     
     // Auto-hide secondary dropup saat mouse keluar dari area button/selectDropup
     condDropup.onmouseleave = () => {
@@ -1068,6 +1163,18 @@ function renderFunctionToolbar() {
             slot.appendChild(nestedBlock);
             cleanPositionStyles(nestedBlock);
             attachDragEventsToBlock(nestedBlock); 
+            
+            // ... Logic untuk block bersarang (Loop, Conditional) di dalam Function ...
+             if (nestedBlock.getAttribute("data-type") === "conditional") {
+                const blockId = nestedBlock.getAttribute('data-cond-id');
+                const isOpen = (blockId === openConditionalBlockId);
+                // PERBAIKAN BUG 3: Tambahkan tombol toggle conditional di dalam function bubble
+                updateConditionalBlockDisplay(nestedBlock, blockId, isOpen);
+
+                if (isOpen) {
+                   renderConditionalBubble(nestedBlock);
+                }
+            }
             
             // ... Loop in Function Logic (Omitted for brevity in this manual integration, assuming logic is present)
             if (nestedBlock.getAttribute("data-type") === "loop") {
@@ -1161,52 +1268,13 @@ function renderWorkspace(isFunctionUpdate = false) {
       // --- LOGIKA KHUSUS CONDITIONAL BLOCK (NEW) ---
       if (b.getAttribute("data-type") === "conditional") {
           const blockId = b.getAttribute('data-cond-id');
-          const state = conditionalNestedContent.get(blockId);
-          const currentDir = state ? state.checkDir : 'above';
+          const isOpen = (blockId === openConditionalBlockId);
           
-          // 1. HAPUS SEMUA TOMBOL TOGGLE LAMA SEBELUM DITAMBAHKAN KEMBALI
-          b.querySelectorAll('.conditional-toggle-btn').forEach(btn => btn.remove());
-          
-          // 2. Update visual image
-          let img = b.querySelector('.conditional-img');
-          
-          // Tambahkan image/ikon arah ke block utama (jika belum ada)
-          if (!img) {
-               b.innerHTML = `
-                  <div class="conditional-content">
-                     <span class="conditional-symbol" style="font-size: 40px; color: var(--tk-cond-text);">!</span>
-                     <div class="conditional-dir-icon" style="position: absolute; right: 8px; bottom: 8px;">
-                        <img src="../Asset/Sprites/x-${currentDir}.png" alt="Direction" class="conditional-img" style="width: 20px; height: 20px;">
-                     </div>
-                  </div>
-               `;
-               img = b.querySelector('.conditional-img');
-               
-          } else {
-             img.src = `../Asset/Sprites/x-${currentDir}.png`;
-          }
-          
-          // 3. Tombol Toggle Conditional
-          const toggleBtn = document.createElement("div");
-          toggleBtn.className = "conditional-toggle-btn";
-          toggleBtn.innerText = (blockId === openConditionalBlockId) ? "✕" : "▼";
-          b.appendChild(toggleBtn);
-          
-          // NOTE: Hanya tombol toggle yang memiliki logic onClick, bukan badan block
-          toggleBtn.onclick = (e) => {
-              e.stopPropagation();
-              if (blockId === openConditionalBlockId) {
-                  openConditionalBlockId = null;
-              } else {
-                  isFunctionBubbleOpen = false;
-                  openLoopIndex = -1;
-                  openConditionalBlockId = blockId;
-              }
-              renderWorkspace();
-          };
+          // PERBAIKAN BUG 2 & 3: Panggil fungsi display update untuk tombol toggle dan tampilan.
+          updateConditionalBlockDisplay(b, blockId, isOpen);
 
           // 4. Render Bubble jika aktif
-          if (blockId === openConditionalBlockId) {
+          if (isOpen) {
               renderConditionalBubble(b);
           }
       }
@@ -1220,7 +1288,7 @@ function renderWorkspace(isFunctionUpdate = false) {
           const toggleBtn = document.createElement("div");
           toggleBtn.className = "loop-toggle-btn";
           toggleBtn.innerText = (loopId === openLoopIndex) ? "✕" : "▼";
-          // HAPUS Tombol lama jika ada (Ini perlu jika DOM tidak sepenuhnya dihapus, tapi di sini kita hanya melampirkan jika belum ada)
+          // HAPUS Tombol lama jika ada
           b.querySelectorAll('.loop-toggle-btn').forEach(btn => btn.remove());
           b.appendChild(toggleBtn);
           
@@ -1281,6 +1349,15 @@ function renderWorkspace(isFunctionUpdate = false) {
                        nestedBlock.innerText = getLocalizedBlockText("jalan", dir);
                   } else if (nestedBlock.getAttribute("data-type") === "tembak") {
                        nestedBlock.innerText = getLocalizedBlockText("tembak");
+                  } else if (nestedBlock.getAttribute("data-type") === "conditional") {
+                        // PERBAIKAN BUG 3: Tambahkan tombol toggle conditional di dalam loop bubble
+                       const blockId = nestedBlock.getAttribute('data-cond-id');
+                       const isOpen = (blockId === openConditionalBlockId);
+                       updateConditionalBlockDisplay(nestedBlock, blockId, isOpen);
+
+                       if (isOpen) {
+                          renderConditionalBubble(nestedBlock);
+                       }
                   }
 
                   attachDragEventsToBlock(nestedBlock); 

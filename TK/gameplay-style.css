@@ -17,7 +17,7 @@
   /* Conditional Block Color (NEW: Orange/Red) */
   --tk-cond-main: #ff9933; /* Bright Orange */
   --tk-cond-border: #cc7a00; /* Darker Orange */
-  --tk-cond-text: white;
+  --tk-cond-text: black;
 }
 
 body {
@@ -526,7 +526,6 @@ body {
   padding: 4px;
 }
 
-/* Hapus semua teks, hanya ikon "?" tersisa */
 .if-content {
     display: flex;
     flex-direction: column;
@@ -536,15 +535,13 @@ body {
 }
 
 .if-text {
-    /* HILANGKAN TEKS */
     display: none;
 }
 
 
-/* Conditional Dropup (Bubble) - Layout Horizontal dengan 2 Kotak */
 .conditional-dropup {
     position: absolute;
-    top: -100px; /* Posisi disesuaikan agar di atas block */
+    top: -100px; 
     left: 50%;
     transform: translateX(-50%);
     
@@ -591,6 +588,25 @@ body {
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     position: relative; /* Penting untuk Secondary Dropup */
+}
+
+.conditional-toggle-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #ff9933; 
+    color: black;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 20;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .condition-btn:hover {

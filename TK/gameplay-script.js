@@ -1,3 +1,7 @@
+import { auth, db } from "../firebase-init.js";
+import { doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+
 /* =========================================
    CORE SETUP & GAME STATE
 ========================================= */
@@ -16,6 +20,7 @@ let lastTime = 0;
 const BEE_SCALE = 0.9;
 const TILE_SIZE = 16;
 const DRAW_SIZE = 24;
+const TOTAL_CHALLENGES = 10; // Jumlah total level
 
 let cam = {
   x: 0,
@@ -29,11 +34,16 @@ let cam = {
 };
 
 const MAP_LIST = [
-    "JSON/01.json", "JSON/02.json", 
-    "JSON/03.json", "JSON/04.json",
-    "JSON/05.json", "JSON/06.json",
-    "JSON/07.json", "JSON/08.json",
-    "JSON/09.json", "JSON/10.json"
+    "JSON/01.json",
+    "JSON/02.json", 
+    "JSON/03.json",
+    "JSON/04.json",
+    "JSON/05.json",
+    "JSON/06.json",
+    "JSON/07.json",
+    "JSON/08.json",
+    "JSON/09.json",
+    "JSON/10.json"
 ];
 
 let selectedMap = parseInt(localStorage.getItem("selectedMap") || "0");
@@ -133,7 +143,6 @@ function checkColliderInDirection(dir) {
     if (!mapData || !beeAnimations.idle) return false;
     
     // Konversi posisi pixel lebah ke posisi Grid (Tile Index)
-    // Menggunakan Math.round untuk mendapatkan tile terdekat (tengah tile)
     const gridX = Math.round(bee.x / DRAW_SIZE);
     const gridY = Math.round(bee.y / DRAW_SIZE);
     
@@ -151,7 +160,6 @@ function checkColliderInDirection(dir) {
 
     const tile = getTileAt("Collider", checkPx, checkPy);
     
-    // Tile > 0 artinya ada dinding, -1 artinya di luar peta (juga dinding)
     return tile > 0 || tile === -1;
 }
 
@@ -376,7 +384,6 @@ function updateConditionalBlockDisplay(b, blockId, isOpen) {
     toggleBtn.onclick = (e) => {
         e.stopPropagation(); 
         
-        // Context Logic (Parent)
         let parentLoopIdAttr = b.getAttribute('data-parent-loop-index');
         let calculatedParentLoopId = -1;
 
@@ -572,20 +579,26 @@ function drop() {
           else if (isLoopNestedTarget && (blockToPlace.getAttribute("data-type") === "loop")) shouldRender = wasNestedDrag || isFromWorkspace;
           
           else if (isConditionalNestedTarget) {
-              // LOGIKA DROP KE DALAM CONDITIONAL (FIX BUG)
               const parentId = target.getAttribute('data-cond-parent-id');
               const state = conditionalNestedContent.get(parentId);
               if (state) {
                   state.nestedBlock = blockToPlace;
-                  
-                  // Pastikan Bubble Conditional tetap terbuka
                   newOpenConditionalBlockId = parentId; 
                   
-                  // FIX: Jangan tutup parent context (Loop/Function)
-                  // Kita warisi state yang sudah ada
-                  newOpenLoopIndex = openLoopIndex; 
-                  // isFunctionBubbleOpen tetap seperti state global sebelumnya
-                  
+                  const globalCondBubble = document.getElementById('global-conditional-dropup');
+                  if (globalCondBubble) {
+                      const ownerContext = globalCondBubble.getAttribute('data-owner-context');
+                      if (ownerContext && ownerContext !== "-1" && ownerContext !== "null") {
+                          newOpenLoopIndex = ownerContext;
+                          if (String(ownerContext).startsWith('nested-f')) {
+                               isFunctionBubbleOpen = true; 
+                          } else if (!isNaN(parseInt(ownerContext))) {
+                               newOpenLoopIndex = parseInt(ownerContext);
+                          }
+                      } else {
+                          newOpenLoopIndex = -1;
+                      }
+                  }
                   shouldRender = true;
               }
           }
@@ -652,6 +665,19 @@ function drop() {
   } else {
       if (wasNestedDrag) {
           shouldRender = true;
+          if (originalSlotIndex === -1 || (typeof originalSlotIndex === 'string' && originalSlotIndex.startsWith('nested-f'))) {
+              isFunctionBubbleOpen = true;
+              if (typeof originalSlotIndex === 'string' && originalSlotIndex.startsWith('nested-f')) newOpenLoopIndex = originalSlotIndex;
+          } else if (originalSlotIndex !== null && typeof originalSlotIndex === 'number') { 
+              newOpenLoopIndex = originalSlotIndex; 
+          } else if (typeof originalSlotIndex === 'string' && originalSlotIndex.startsWith('cond-')) {
+               newOpenConditionalBlockId = originalSlotIndex; 
+               const globalCondBubble = document.getElementById('global-conditional-dropup');
+               if (globalCondBubble) {
+                   const ownerContext = globalCondBubble.getAttribute('data-owner-context');
+                   if (ownerContext && ownerContext !== "-1") newOpenLoopIndex = ownerContext;
+               }
+          }
           blockToPlace.removeAttribute('data-is-nested');
       } 
       else if (isFromWorkspace) {
@@ -730,9 +756,15 @@ function renderConditionalBubble(b) {
     condDropup.className = "conditional-dropup";
     condDropup.id = 'global-conditional-dropup';
     
-    // VISIBILITY FIX: Inline styles + High Z-Index
     condDropup.style.display = "flex";
     condDropup.style.zIndex = "3000"; 
+    
+    const parentLoopId = b.getAttribute('data-parent-loop-index');
+    if (parentLoopId) {
+        condDropup.setAttribute('data-owner-context', parentLoopId);
+    } else {
+        condDropup.setAttribute('data-owner-context', "-1");
+    }
     
     const activeDir = state.checkDir;
 
@@ -985,7 +1017,6 @@ function renderWorkspace(isFunctionUpdate = false) {
                const loopId = `nested-f${nestedIndex}`;
                renderLoopBubble(nestedBlock, loopId, functionLoopNestedContent[nestedIndex], true);
           } else if (nestedBlock.getAttribute("data-type") === "conditional") {
-              // Ensure conditional bubble renders even if inside function
                const blockId = nestedBlock.getAttribute('data-cond-id');
                if (blockId === openConditionalBlockId) {
                    setTimeout(() => renderConditionalBubble(nestedBlock), 0);
@@ -1014,7 +1045,6 @@ function renderWorkspace(isFunctionUpdate = false) {
       if (b.getAttribute("data-type") === "conditional") {
           const blockId = b.getAttribute('data-cond-id');
           updateConditionalBlockDisplay(b, blockId, openConditionalBlockId === blockId);
-          // Defer render to ensure DOM is ready
           if (blockId === openConditionalBlockId) {
              setTimeout(() => renderConditionalBubble(b), 0);
           }
@@ -1195,15 +1225,15 @@ function updateBee(dt) {
 
   if (bee.state === "shoot") {
     if (bee.timer > 80) {
-      bee.timer = 0;
-      bee.frame++;
+      bee.timer = 0;
+      bee.frame++;
 
-      if (bee.frame >= anim.frames) {
-          bee.state = "idle";
-          bee.frame = 0;
-      }
-    }
-    return;
+      if (bee.frame >= anim.frames) {
+          bee.state = "idle";
+          bee.frame = 0;
+      }
+    }
+    return;
   }
 
   if (bee.timer > 120) {
@@ -1276,16 +1306,69 @@ function checkWinLose() {
   }
 }
 
+
+/* =========================================
+   DATABASE WRITE LOGIC
+========================================= */
+
+// Fungsi untuk menyimpan status level yang telah diselesaikan ke Firestore
+async function writeChallengeComplete(challengeId) {
+    if (!auth.currentUser) {
+        console.warn("User not authenticated. Cannot write progress to Firestore.");
+        return;
+    }
+
+    const userId = auth.currentUser.uid;
+    const appId = auth.app.options.appId;
+    const docRef = doc(db, "artifacts", appId, "users", userId, "profile", "data");
+
+    try {
+        // Menggunakan arrayUnion untuk memastikan ID level tidak duplikat
+        await updateDoc(docRef, {
+            completedChallenges: arrayUnion(challengeId)
+        });
+
+        // Update localStorage setelah berhasil update Firestore
+        let completed = JSON.parse(localStorage.getItem("completedChallenges") || "[]");
+        if (!completed.includes(challengeId)) {
+            completed.push(challengeId);
+            localStorage.setItem("completedChallenges", JSON.stringify(completed));
+        }
+        
+        // Simpan jumlah XP baru (jika XP = jumlah level selesai)
+        localStorage.setItem("xp", completed.length.toString());
+
+        console.log(`Challenge ${challengeId} progress updated in Firestore.`);
+    } catch (e) {
+        console.error("Error writing document to Firestore:", e);
+    }
+}
+
+
 function triggerWin() {
   isRunningCommands = false;
   bee.state = "idle";
+  
+  // 1. Simpan progres ke database (Hanya jika level belum selesai)
+  let completed = JSON.parse(localStorage.getItem("completedChallenges") || "[]");
+  const currentLevelId = selectedMap;
+
+  if (!completed.includes(currentLevelId)) {
+      writeChallengeComplete(currentLevelId);
+      // Karena writeChallengeComplete async, kita langsung update UI berdasarkan data yang akan datang
+      completed.push(currentLevelId); 
+  }
+  
+  // 2. Update Win Window Display
   document.querySelectorAll("button").forEach(b => {
     if (b.id !== "btn-kembali-win") b.disabled = true;
   });
   const overlay = document.getElementById("win-overlay");
   if(overlay) overlay.style.display = "flex";
+  
+  // Menampilkan total tantangan yang telah diselesaikan
   const honey = document.getElementById("honey-number");
-  if(honey) honey.innerText = "1";
+  if(honey) honey.innerText = completed.length.toString();
 
   const btnWin = document.getElementById("btn-kembali-win");
   if(btnWin) btnWin.onclick = () => {
@@ -1654,6 +1737,30 @@ fetch("../Asset/Sprites/normal.json")
    INIT FUNCTIONS
 ========================================= */
 
+// Fungsi baru untuk mengatur visibilitas blok di toolbar
+function setToolbarVisibility() {
+    let requiredBlocks;
+    try {
+        const stored = localStorage.getItem("requiredBlocks");
+        requiredBlocks = stored ? JSON.parse(stored) : { loop: false, conditional: false };
+    } catch (e) {
+        console.error("Failed to parse requiredBlocks from localStorage:", e);
+        requiredBlocks = { loop: false, conditional: false };
+    }
+
+    const btnLoop = document.getElementById("btn-loop");
+    const btnConditional = document.getElementById("btn-if-else");
+
+    if (btnLoop) {
+        btnLoop.style.display = requiredBlocks.loop ? "flex" : "none";
+    }
+    if (btnConditional) {
+        btnConditional.style.display = requiredBlocks.conditional ? "flex" : "none";
+    }
+    
+}
+
+
 // Panggilan awal saat semua aset dimuat
 Promise.all([
     loadMap(selectedMap),
@@ -1679,6 +1786,7 @@ Promise.all([
 
 
 document.addEventListener("DOMContentLoaded", () => {
+    setToolbarVisibility(); 
     initDropups(); 
     renderWorkspace();
     applyLanguage(currentLang);
@@ -1704,11 +1812,11 @@ if(btnResetWorkspace) btnResetWorkspace.addEventListener("click", () => {
     loopContent = Array(10).fill(null).map(() => Array(2).fill(null));
     functionContent = [null, null];
     functionLoopNestedContent = Array(2).fill(null).map(() => Array(2).fill(null)); 
-    conditionalNestedContent.clear(); // CLEAR CONDITIONAL STATE (NEW)
+    conditionalNestedContent.clear(); 
     conditionalCounter = 0;
     openLoopIndex = -1;
     isFunctionBubbleOpen = false;
-    openConditionalBlockId = null; // NEW
+    openConditionalBlockId = null; 
     renderWorkspace();
 });
 
@@ -1742,7 +1850,7 @@ function initDropups() {
     const singleBtns = [
         { id: "btn-tembak", type: "tembak", label: "🔫" },
         { id: "btn-loop", type: "loop", label: "🔁" },
-        { id: "btn-if-else", type: "conditional", label: "!" }, // Menggunakan ID btn-if-else untuk Conditional
+        { id: "btn-if-else", type: "conditional", label: "!" }, 
         { id: "btn-function", type: "function", label: "Function: {}" }, 
     ];
 
@@ -1772,7 +1880,7 @@ function initDropups() {
             else if (type === "function") {
                 block = createFunctionBlock(); 
             }
-            else if (type === "conditional") { // NEW
+            else if (type === "conditional") { 
                 block = createConditionalBlock('above'); 
             }
             else { 
@@ -1925,12 +2033,10 @@ function getBlockCommands(b) {
         const blockId = b.getAttribute("data-cond-id");
         const state = conditionalNestedContent.get(blockId);
         
-        // PUSH COMMAND 'check_condition'
         if (state && state.nestedBlock) {
             commands.push({
                 type: "check_condition",
                 checkDir: state.checkDir,
-                // Rekursif: Isi perintah yang akan dijalankan jika kondisi TRUE
                 nestedCommands: getBlockCommands(state.nestedBlock) 
             });
         }
@@ -1984,7 +2090,6 @@ function runNextCommand() {
     if (cmd.type === "break_loop") {
         const nextLoopEndIndex = commandQueue.findIndex(c => c.type === "loop_end");
         if (nextLoopEndIndex !== -1) {
-            // Hapus semua perintah hingga loop_end
             commandQueue.splice(0, nextLoopEndIndex + 1);
         }
         return runNextCommand(); 
@@ -1992,16 +2097,10 @@ function runNextCommand() {
     
     // --- Conditional Check (IMPLEMENTASI LOGIKA UTAMA) ---
     if (cmd.type === "check_condition") {
-        // Cek apakah ada dinding di arah tersebut RELATIF terhadap posisi Bee saat ini
         if (checkColliderInDirection(cmd.checkDir)) {
-            // JIKA BENAR: Sisipkan perintah nested ke DEPAN antrian
-            // Sehingga perintah tersebut langsung dijalankan berikutnya
             commandQueue.unshift(...cmd.nestedCommands);
-            
-            // Lanjut eksekusi
             return runNextCommand();
         } else {
-            // JIKA SALAH: Abaikan dan lanjut ke perintah berikutnya
             return runNextCommand();
         }
     }

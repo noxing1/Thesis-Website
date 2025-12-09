@@ -2,10 +2,10 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BeeCoder - Login</title>
-  <link rel="stylesheet" href="index-style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeeCoder - Login</title>
+    <link rel="stylesheet" href="index-style.css">
 </head>
 
 <body class="login-mode theme-sd">
@@ -14,8 +14,7 @@
     <div id="login-overlay" class="overlay">
 
         <!-- LOGIN WINDOW -->
-        <div id="login-window" class="modal-window">
-            <button id="next-btn" class="next-btn">Next</button>
+        <div id="login-window" class="modal-window active">
             <h2 class="modal-title">Login</h2>
 
             <input type="text" id="login-username" placeholder="Username">
@@ -65,7 +64,8 @@
     </div>
 
     <div class="content-box">
-        <h1>Selamat Datang di <span class="brand">BeeCoder</span>!</h1>
+        <!-- Struktur H1 diperbarui untuk menampilkan username -->
+        <h1>Selamat Datang, <span id="current-username-display">Pengguna</span> di <span class="brand">BeeCoder</span>!</h1> 
         <p class="tagline">Mulai perjalanan kodingmu dengan cara yang seru dan mudah.</p>
 
         <h3>Apakah kamu:</h3>
@@ -79,6 +79,12 @@
         <p class="footer-text">
             Baru di <span class="brand">BeeCoder</span>? Pelajari dasar-dasar koding sambil bermain!
         </p>
+        
+        <!-- Log Out Status Text -->
+        <p id="logout-status-text" class="logout-status-text hidden">
+            Bukan akunmu? <span id="btn-logout" class="link">Keluar</span>
+        </p>
+
     </div>
 
     <button id="lang-toggle-btn" class="lang-btn">IND</button>

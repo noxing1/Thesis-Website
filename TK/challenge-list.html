@@ -46,10 +46,10 @@
     <div class="progress-content">
       <div class="user-info">
         <div class="exp-bar">
-          <div class="exp-fill" style="width: 60%;"></div>
+          <div id="exp-fill" class="exp-fill" style="width: 0%;"></div>
         </div>
-        <p><strong id="user-label">Pengguna:</strong> [Nama Anak]</p>
-        <p><strong id="xp-label">XP:</strong> 600 / 1000</p>
+        <p><strong id="user-label">Pengguna:</strong> <span id="user-name-display">[Nama Anak]</span></p>
+        <p><strong id="xp-label">XP:</strong> <span id="user-xp-display">0</span> / <span id="user-xp-max">10</span></p>
       </div>
 
       <div class="best-challenge">
@@ -80,53 +80,63 @@
     <div class="challenge-list">
 
       <div class="challenge-box mudah" data-map="0" data-id="0">
-        <h3 class="cl-title">Lebah Pertamamu!</h3>
-        <p class="tags cl-tags">[mudah] [movement]</p>
+        <div class="completion-badge hidden">✅</div> <!-- NEW -->
+        <h3 class="cl-title">Langkah Pertama</h3>
+        <p class="tags cl-tags">[mudah] [musuh]</p>
       </div>
 
       <div class="challenge-box mudah" data-map="1" data-id="1">
-        <h3 class="cl-title">Langkah Pertama</h3>
-        <p class="tags cl-tags">[mudah] [movement]</p>
+        <div class="completion-badge hidden">✅</div> <!-- NEW -->
+        <h3 class="cl-title">Kolam Kecil</h3>
+        <p class="tags cl-tags">[mudah] [musuh]</p>
       </div>
 
       <div class="challenge-box mudah" data-map="2" data-id="2">
-        <h3 class="cl-title">Panah Arah</h3>
-        <p class="tags cl-tags">[mudah] [navigation]</p>
+        <div class="completion-badge hidden">✅</div> <!-- NEW -->
+        <h3 class="cl-title">Blokade Kupu-kupu</h3>
+        <p class="tags cl-tags">[mudah] [musuh]</p>
       </div>
 
       <div class="challenge-box sedang" data-map="3" data-id="3">
-        <h3 class="cl-title">Belok Kanan</h3>
-        <p class="tags cl-tags">[sedang] [movement]</p>
+        <div class="completion-badge hidden">✅</div> <!-- NEW -->
+        <h3 class="cl-title">Jalur Zig-Zag</h3>
+        <p class="tags cl-tags">[sedang] [musuh]</p>
       </div>
 
       <div class="challenge-box sedang" data-map="4" data-id="4">
-        <h3 class="cl-title">Belok Kiri</h3>
-        <p class="tags cl-tags">[sedang] [movement]</p>
+        <div class="completion-badge hidden">✅</div> <!-- NEW -->
+        <h3 class="cl-title">Blokade Balik</h3>
+        <p class="tags cl-tags">[sedang] [musuh]</p>
       </div>
 
       <div class="challenge-box sedang" data-map="5" data-id="5">
-        <h3 class="cl-title">Jalan Lurus Jauh</h3>
-        <p class="tags cl-tags">[sedang] [route]</p>
+        <div class="completion-badge hidden">✅</div> <!-- NEW -->
+        <h3 class="cl-title">Gerbang Ganda</h3>
+        <p class="tags cl-tags">[sedang] [musuh] [loop]</p>
       </div>
 
       <div class="challenge-box sulit" data-map="6" data-id="6">
-        <h3 class="cl-title">Rute Zig-Zag</h3>
-        <p class="tags cl-tags">[sulit] [path]</p>
+        <div class="completion-badge hidden">✅</div> <!-- NEW -->
+        <h3 class="cl-title">Labirin Mini</h3>
+        <p class="tags cl-tags">[sulit] [musuh] [conditional]</p>
       </div>
 
       <div class="challenge-box sulit" data-map="7" data-id="7">
-        <h3 class="cl-title">Hindari Dua Kupu-kupu</h3>
-        <p class="tags cl-tags">[sulit] [enemy]</p>
+        <div class="completion-badge hidden">✅</div> <!-- NEW -->
+        <h3 class="cl-title">Simpang Tiga</h3>
+        <p class="tags cl-tags">[sulit] [musuh]</p>
       </div>
 
       <div class="challenge-box sulit" data-map="8" data-id="8">
-        <h3 class="cl-title">Rute Panjang & Musuh</h3>
-        <p class="tags cl-tags">[sulit] [enemy] [path]</p>
+        <div class="completion-badge hidden">✅</div> <!-- NEW -->
+        <h3 class="cl-title">Pola Zig-Zag</h3>
+        <p class="tags cl-tags">[sulit] [musuh] [loop]</p>
       </div>
 
       <div class="challenge-box sulit" data-map="9" data-id="9">
-        <h3 class="cl-title">Labirin Mini Lebah</h3>
-        <p class="tags cl-tags">[sulit] [logic]</p>
+        <div class="completion-badge hidden">✅</div> <!-- NEW -->
+        <h3 class="cl-title">Labirin</h3>
+        <p class="tags cl-tags">[sulit] [loop] [conditional]</p>
       </div>
 
     </div>

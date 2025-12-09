@@ -2,8 +2,11 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+// Tambahkan import setDoc dan doc di sini agar tersedia global jika diperlukan (tapi lebih baik diimpor di index-script)
 
 const firebaseConfig = {
+    // Gunakan variabel global jika tersedia di Canvas environment
+    // Jika tidak, gunakan nilai dummy yang diberikan
     apiKey: "AIzaSyBrU2JSjCBQvhT1tSKimhYqf7nh6c9LZuE",
     authDomain: "beecoder-7c2c4.firebaseapp.com",
     projectId: "beecoder-7c2c4",

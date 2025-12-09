@@ -1,61 +1,92 @@
-
 const CHALLENGE_TEXT = {
     id: [
-        { title: "Lebah Pertamamu!", tags: "[mudah] [movement]" },
-        { title: "Langkah Pertama", tags: "[mudah] [movement]" },
-        { title: "Panah Arah", tags: "[mudah] [navigation]" },
-        { title: "Belok Kanan", tags: "[sedang] [movement]" },
-        { title: "Belok Kiri", tags: "[sedang] [movement]" },
-        { title: "Jalan Lurus Jauh", tags: "[sedang] [route]" },
-        { title: "Rute Zig-Zag", tags: "[sulit] [path]" },
-        { title: "Hindari Dua Kupu-kupu", tags: "[sulit] [enemy]" },
-        { title: "Rute Panjang & Musuh", tags: "[sulit] [enemy] [path]" },
-        { title: "Labirin Mini Lebah", tags: "[sulit] [logic]" }
+        { title: "Langkah Pertama", tags: "[mudah]", blocks: { loop: false, conditional: false } },
+        { title: "Kolam Kecil", tags: "[mudah]", blocks: { loop: false, conditional: false } },
+        { title: "Blokade Kupu-kupu", tags: "[mudah] [musuh]", blocks: { loop: false, conditional: false } },
+        { title: "Jalur Zig-Zag", tags: "[sedang] [musuh]", blocks: { loop: false, conditional: false } },
+        { title: "Blokade Balik", tags: "[sedang] [musuh]", blocks: { loop: false, conditional: false } },
+        
+        { title: "Gerbang Ganda", tags: "[sedang] [musuh] [loop]", blocks: { loop: true, conditional: false } },
+        
+        { title: "Labirin Mini", tags: "[sulit] [musuh] [conditional]", blocks: { loop: false, conditional: true } },
+        
+        { title: "Simpang Tiga", tags: "[sulit] [musuh]", blocks: { loop: false, conditional: false } },
+        
+        { title: "Pola Zig-Zag", tags: "[sulit] [musuh] [loop]", blocks: { loop: true, conditional: false } },
+        
+        { title: "Labirin", tags: "[sulit] [loop] [conditional]", blocks: { loop: true, conditional: true } }
     ],
 
     en: [
-        { title: "Your First Bee!", tags: "[easy] [movement]" },
-        { title: "First Steps", tags: "[easy] [movement]" },
-        { title: "Direction Arrows", tags: "[easy] [navigation]" },
-        { title: "Turn Right", tags: "[medium] [movement]" },
-        { title: "Turn Left", tags: "[medium] [movement]" },
-        { title: "Long Straight Path", tags: "[medium] [route]" },
-        { title: "Zig-Zag Route", tags: "[hard] [path]" },
-        { title: "Avoid Two Butterflies", tags: "[hard] [enemy]" },
-        { title: "Long Route & Enemy", tags: "[hard] [enemy] [path]" },
-        { title: "Mini Bee Maze", tags: "[hard] [logic]" }
+        { title: "First Step", tags: "[easy]", blocks: { loop: false, conditional: false } },
+        { title: "Small Pond", tags: "[easy]", blocks: { loop: false, conditional: false } },
+        { title: "Butterfly Blockade", tags: "[easy] [enemy]", blocks: { loop: false, conditional: false } },
+        { title: "Zig-Zag Path", tags: "[medium] [enemy]", blocks: { loop: false, conditional: false } },
+        { title: "Reverse Blockade", tags: "[medium] [enemy]", blocks: { loop: false, conditional: false } },
+        
+        { title: "Double Gate", tags: "[medium] [enemy] [loop]", blocks: { loop: true, conditional: false } },
+        
+        { title: "Mini Maze", tags: "[hard] [enemy] [conditional]", blocks: { loop: false, conditional: true } },
+        
+        { title: "Three-Way Intersection", tags: "[hard] [enemy]", blocks: { loop: false, conditional: false } },
+        
+        { title: "Zig-Zag Pattern", tags: "[hard] [enemy] [loop]", blocks: { loop: true, conditional: false } },
+        
+        { title: "Labirynth", tags: "[hard] [loop] [conditional]", blocks: { loop: true, conditional: true } }
     ]
 };
 
 /* ============================================================
-   CLOCK (DIGITAL CLOCK WITH ANIMATION)
+    INIT: User Data & Theme
+============================================================ */
+
+const userTheme = localStorage.getItem("theme") || "tk";
+document.body.classList.remove("theme-tk", "theme-sd");
+document.body.classList.add(`theme-${userTheme}`);
+
+let completedChallenges = [];
+try {
+    const storedChallenges = localStorage.getItem("completedChallenges");
+    if (storedChallenges) {
+        completedChallenges = JSON.parse(storedChallenges);
+    }
+} catch (e) {
+    console.error("Error parsing completed challenges:", e);
+}
+
+// Total Challenge yang tersedia adalah 10 (index 0 hingga 9)
+const TOTAL_CHALLENGES = 10;
+const completedCount = completedChallenges.length;
+const progressPercentage = Math.min(100, (completedCount / TOTAL_CHALLENGES) * 100);
+
+/* ============================================================
+    CLOCK (DIGITAL CLOCK WITH ANIMATION)
 ============================================================ */
 
 function updateClock() {
-  const now = new Date();
+    const now = new Date();
 
-  const hour = now.getHours().toString().padStart(2, "0");
-  const minute = now.getMinutes().toString().padStart(2, "0");
+    const hour = now.getHours().toString().padStart(2, "0");
+    const minute = now.getMinutes().toString().padStart(2, "0");
 
-  const hourEl = document.getElementById("clock-hour");
-  const minEl = document.getElementById("clock-minute");
+    const hourEl = document.getElementById("clock-hour");
+    const minEl = document.getElementById("clock-minute");
 
-  // Jika berubah → animasi slide + fade
-  if (hourEl.textContent !== hour) {
-    hourEl.classList.add("time-animate");
-    setTimeout(() => {
-      hourEl.textContent = hour;
-      hourEl.classList.remove("time-animate");
-    }, 200);
-  }
+    if (hourEl.textContent !== hour) {
+        hourEl.classList.add("time-animate");
+        setTimeout(() => {
+            hourEl.textContent = hour;
+            hourEl.classList.remove("time-animate");
+        }, 200);
+    }
 
-  if (minEl.textContent !== minute) {
-    minEl.classList.add("time-animate");
-    setTimeout(() => {
-      minEl.textContent = minute;
-      minEl.classList.remove("time-animate");
-    }, 200);
-  }
+    if (minEl.textContent !== minute) {
+        minEl.classList.add("time-animate");
+        setTimeout(() => {
+            minEl.textContent = minute;
+            minEl.classList.remove("time-animate");
+        }, 200);
+    }
 }
 
 setInterval(updateClock, 1000);
@@ -63,8 +94,7 @@ updateClock();
 
 
 /* ============================================================
-   LANGUAGE TOGGLE (IND ⇄ ENG)
-   — sinkron dengan login page (localStorage)
+    LANGUAGE TOGGLE (IND ⇄ ENG)
 ============================================================ */
 
 let currentLanguage = localStorage.getItem("lang") || "id";
@@ -75,11 +105,11 @@ applyLanguage(currentLanguage);
 updateLangButton();
 
 langBtn.onclick = () => {
-  currentLanguage = (currentLanguage === "id") ? "en" : "id";
-  localStorage.setItem("lang", currentLanguage);
+    currentLanguage = (currentLanguage === "id") ? "en" : "id";
+    localStorage.setItem("lang", currentLanguage);
 
-  applyLanguage(currentLanguage);
-  updateLangButton();
+    applyLanguage(currentLanguage);
+    updateLangButton();
 };
 
 function setLanguage(lang) {
@@ -99,7 +129,7 @@ function text(el, value) {
 }
 
 /* ============================================================
-   APPLY LANGUAGE STRINGS
+    APPLY LANGUAGE STRINGS AND USER DATA
 ============================================================ */
 
 function applyLanguage(lang) {
@@ -116,7 +146,7 @@ function applyLanguage(lang) {
             filter_medium: "Medium",
             filter_hard: "Hard",
             user_label: "User:",
-            xp_label: "XP:",
+            xp_label: "Completed:",
             btn_best: "Start Best Challenge",
         },
 
@@ -131,7 +161,7 @@ function applyLanguage(lang) {
             filter_medium: "Sedang",
             filter_hard: "Sulit",
             user_label: "Pengguna:",
-            xp_label: "XP:",
+            xp_label: "Selesai:",
             btn_best: "Mulai Tantangan Terbaik",
         }
     };
@@ -139,7 +169,18 @@ function applyLanguage(lang) {
     const T = L[lang];
 
     /* -------------------------
-       CHALLENGE LIST PAGE
+        USER INFO DISPLAY
+    ------------------------- */
+    const storedUsername = localStorage.getItem("username") || "Pengguna";
+    
+    document.getElementById("user-name-display").textContent = storedUsername;
+    document.getElementById("user-xp-display").textContent = completedCount;
+    document.getElementById("user-xp-max").textContent = TOTAL_CHALLENGES;
+    document.getElementById("exp-fill").style.width = `${progressPercentage}%`;
+
+
+    /* -------------------------
+        CHALLENGE LIST PAGE TEXTS
     ------------------------- */
     text(document.getElementById("progress-title"), T.progress_title);
     text(document.getElementById("challenge-subtitle"), T.challenge_subtitle);
@@ -164,40 +205,53 @@ function applyLanguage(lang) {
             titleEl.textContent = CHALLENGE_TEXT[lang][cid].title;
             tagEl.textContent = CHALLENGE_TEXT[lang][cid].tags;
         }
+        
+        // Logika penandaan level selesai
+        const badge = box.querySelector(".completion-badge");
+        if (badge) {
+             if (completedChallenges.includes(cid)) {
+                 badge.classList.remove("hidden");
+             } else {
+                 badge.classList.add("hidden");
+             }
+        }
     });
 }
 
 /* ============================================================
-   FILTER CHALLENGES
+    FILTER CHALLENGES
 ============================================================ */
 
 const radioButtons = document.querySelectorAll('input[name="difficulty"]');
 const challengeBoxes = document.querySelectorAll('.challenge-box');
 
 radioButtons.forEach(radio => {
-  radio.addEventListener('change', () => {
-    const v = radio.value;
+    radio.addEventListener('change', () => {
+        const v = radio.value;
 
-    challengeBoxes.forEach(box => {
-      if (v === 'all') box.style.display = "block";
-      else box.style.display = box.classList.contains(v) ? "block" : "none";
+        challengeBoxes.forEach(box => {
+            if (v === 'all') box.style.display = "block";
+            else box.style.display = box.classList.contains(v) ? "block" : "none";
+        });
+
     });
-
-  });
 });
 
 /* ============================================================
-   BUTTON ACTIONS (GO TO NEXT PAGE)
+    BUTTON ACTIONS (GO TO NEXT PAGE)
 ============================================================ */
 
 document.getElementById("btn-best").onclick = () => {
-  window.location.href = "gameplay.html";
+    window.location.href = "gameplay.html";
 };
 
 document.querySelectorAll(".challenge-box").forEach(box => {
     box.addEventListener("click", () => {
         const id = parseInt(box.getAttribute("data-map"));
         localStorage.setItem("selectedMap", id);
+        
+        const requiredBlocks = CHALLENGE_TEXT[currentLanguage][id].blocks;
+        localStorage.setItem("requiredBlocks", JSON.stringify(requiredBlocks));
 
         window.location.href = "gameplay.html";
     });

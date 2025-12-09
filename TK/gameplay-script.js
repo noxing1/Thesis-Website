@@ -1313,6 +1313,7 @@ function checkWinLose() {
 
 // Fungsi untuk menyimpan status level yang telah diselesaikan ke Firestore
 async function writeChallengeComplete(challengeId) {
+    // Karena ini adalah modul, auth dan db sudah tersedia dari import.
     if (!auth.currentUser) {
         console.warn("User not authenticated. Cannot write progress to Firestore.");
         return;

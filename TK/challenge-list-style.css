@@ -2,19 +2,16 @@
    VARIABLE DEFINITION (TK THEME - Added for Consistency)
 ============================================================ */
 :root {
-  /* TK THEME COLORS (Diambil dari kode yang ada) */
   --tk-bg: #f8d24b;
   --tk-panel: #ffeb8a;
   --tk-panel-dark: #ffeab2;
   --tk-brown: #4b3300;
-  --tk-shadow: rgba(0,0,0,0.3); /* Ditingkatkan sedikit */
+  --tk-shadow: rgba(0,0,0,0.3);
   
-  /* Nilai untuk Tombol TK */
   --tk-btn-bg: gold;
   --tk-btn-text: black;
   --tk-btn-border: none; 
 }
-
 
 /* ============================================================
    BASE STYLE (THEME TK)
@@ -39,7 +36,6 @@ body {
   transition: background-color 0.5s ease, color 0.5s ease;
 }
 
-
 /* ============================================================
    NAVBAR
 ============================================================ */
@@ -51,14 +47,11 @@ body {
   height: 68px;
   background: #ffeb8a;
   box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   padding: 12px 20px;
   box-sizing: border-box;
-
   z-index: 5;
 }
 
@@ -113,27 +106,18 @@ body {
   transform: scale(1.07);
 }
 
-/* --- NAV BACK BUTTON (FIXED SHADOW) --- */
 .nav-back-btn {
-  /* Dasar dari lang-btn */
-  width: 40px; /* Lebih kecil */
+  width: 40px;
   height: 32px;
   border-radius: 6px;
   border: none;
   cursor: pointer;
-  
-  /* Ikon ⮌ harus terlihat besar */
   font-size: 22px; 
   font-weight: bold;
-  
-  /* Warna TK Button */
   background: gold;
   color: #4a3b00;
-  
   transition: 0.25s ease;
-  /* FIX: Menambahkan box-shadow yang hilang */
   box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
-  
   display: flex;
   align-items: center;
   justify-content: center;
@@ -143,20 +127,18 @@ body {
   transform: scale(1.07);
 }
 
-
 /* ============================================================
    PROGRESS BOX
 ============================================================ */
 .progress-box {
   background-color: #fff4bf;
-  border-radius: 0 0 500px 500px; /* lengkung di bagian bawah: setengah-oval */
+  border-radius: 0 0 500px 500px;
   padding: 28px 20px 36px 20px;
   margin: 13.5px auto 18px;
-  width: 1500px;;
+  width: 1500px;
   color: #4a3b00;
   box-shadow: 0 8px 18px rgba(0,0,0,0.12);
   position: relative;
-  /* geser ke atas sedikit supaya bagian atas 'menyentuh' navbar secara visual */
   transform: translateY(-34px);
   box-sizing: border-box;
 }
@@ -174,9 +156,11 @@ body {
   .challenge-list {
     grid-column: 1 / -1;
   }
-
-  /* kurangi offset progress box vertical agar tidak 'tumpang tindih' pada layar sempit */
-  .progress-box { transform: translateY(-18px); padding-top: 20px; border-radius: 0 0 120px 120px; }
+  .progress-box { 
+    transform: translateY(-18px); 
+    padding-top: 20px; 
+    border-radius: 0 0 120px 120px; 
+  }
 }
 
 .progress-box .progress-header,
@@ -240,7 +224,6 @@ body {
   transform: scale(1.05);
 }
 
-
 /* ============================================================
    CHALLENGE LIST
 ============================================================ */
@@ -248,7 +231,7 @@ body {
   width: 90%;
   margin: auto;
   display: grid;
-  grid-template-columns: 180px 1fr; /* kolom kiri = filter, kanan = daftar */
+  grid-template-columns: 180px 1fr;
   gap: 20px;
   align-items: start;
   column-gap: 30px;
@@ -256,7 +239,7 @@ body {
 }
 
 #challenge-title {
-  grid-column: 1 / -1; /* heading mengambil seluruh 2 kolom */
+  grid-column: 1 / -1;
   margin: 0 0 18px 0;
   font-size: 1.8rem;
   font-weight: bold;
@@ -290,7 +273,7 @@ body {
   padding: 16px;
   margin: 10px 0;
   box-shadow: 0 0 8px rgba(0,0,0,0.2);
-  line-height: 1.5; /* buat teks tidak berdempet */
+  line-height: 1.5;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }

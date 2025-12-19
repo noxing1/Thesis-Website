@@ -1,7 +1,6 @@
 /* ============================================================
     GLOBAL STYLES
 ============================================================ */
-
 body {
     font-family: 'Inter', Helvetica, Arial, sans-serif;
     background-color: #212536;
@@ -12,10 +11,7 @@ body {
     overflow: hidden;
     gap: 40px;
     line-height: 1.4;
-
     display: flex;
-
-    /* Transition diperhalus & diperlambat */
     transition: background-color 0.9s ease, color 0.9s ease;
 }
 
@@ -29,11 +25,8 @@ body {
     position: relative;
     flex-shrink: 0;
     border-right: 0;
-
-    /* Bayangan horizontal mengarah ke kanan */
     box-shadow: 25px 0 45px -15px rgba(0, 0, 0, 0.35);
 }
-
 
 .left-image img {
     position: absolute;
@@ -55,13 +48,28 @@ body {
     font-weight: bold;
     padding-left: 60px;
     box-sizing: border-box;
-    position: relative; /* Untuk positioning tombol logout */
+    position: relative;
 }
 
-/* Heading, tagline dan teks lainnya */
-h1 { margin-bottom: 8px; font-size: 2rem; line-height: 1.25; }
-.tagline { font-size: 1rem; margin-top: 4px; margin-bottom: 16px; line-height: 1.45; width: 280px; }
-h3 { margin-top: 8px; margin-bottom: 10px; line-height: 1.3;}
+h1 {
+    margin-bottom: 8px;
+    font-size: 2rem;
+    line-height: 1.25;
+}
+
+.tagline {
+    font-size: 1rem;
+    margin-top: 4px;
+    margin-bottom: 16px;
+    line-height: 1.45;
+    width: 280px;
+}
+
+h3 {
+    margin-top: 8px;
+    margin-bottom: 10px;
+    line-height: 1.3;
+}
 
 /* ============================================================
     SCHOOL SELECTION BUTTONS
@@ -78,7 +86,6 @@ h3 { margin-top: 8px; margin-bottom: 10px; line-height: 1.3;}
     color: white;
 }
 
-/* Button styles */
 button {
     background-color: #fcd34d;
     border: none;
@@ -89,32 +96,36 @@ button {
     font-weight: bold;
     font-family: Helvetica, sans-serif;
     cursor: pointer;
-
     box-shadow: 5px 5px 5px 2px rgba(0,0,0,0.4);
     transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
-/* Hover effect */
 button:hover {
     background-color: #ffd966;
     transform: scale(1.05);
 }
 
-/* Brand text */
 .brand {
     color: gold;
     text-shadow: 1px 1px 0 black;
 }
 
 /* ============================================================
-    THEMES (TK & SD)
+    THEME: TK (KINDERGARTEN)
 ============================================================ */
-
-/* Tema TK — cerah & ceria */
 body.theme-tk {
     background-color: #f9d548;
     color: #4b3300;
     text-shadow: 0px 0px 3px #ffffff80, 1px 1px 1px #00000050;
+}
+
+body.theme-tk-hover,
+body.theme-tk-hover .content-box,
+body.theme-tk-hover h1,
+body.theme-tk-hover h3,
+body.theme-tk-hover p,
+body.theme-tk-hover .or-text {
+    color: #2a1d00;
 }
 
 body.theme-tk .brand {
@@ -131,38 +142,26 @@ body.theme-tk button:hover {
     background-color: #ffef9f;
 }
 
-/* Tema SD — gelap & serius */
+/* ============================================================
+    THEME: SD (ELEMENTARY)
+============================================================ */
 body.theme-sd {
     background-color: #212536;
     color: white;
 }
 
-body.theme-sd .brand {
-    color: gold;
-    text-shadow: 1px 1px 0 black;
-}
-
-/* Hover TK → Oranye terang */
-body.theme-tk-hover,
-body.theme-tk-hover .content-box,
-body.theme-tk-hover h1,
-body.theme-tk-hover h3,
-body.theme-tk-hover p,
-body.theme-tk-hover .or-text {
-    color: #2a1d00; /* gelap & readable */
-}
-
-
-
-
-/* Hover SD → Biru muda */
 body.theme-sd-hover,
 body.theme-sd-hover .content-box,
 body.theme-sd-hover h1,
 body.theme-sd-hover h3,
 body.theme-sd-hover p,
 body.theme-sd-hover .or-text {
-    color: #0f0f0f; /* hampir hitam, readable */
+    color: #0f0f0f;
+}
+
+body.theme-sd .brand {
+    color: gold;
+    text-shadow: 1px 1px 0 black;
 }
 
 /* ============================================================
@@ -172,24 +171,18 @@ body.theme-sd-hover .or-text {
     position: fixed;
     top: 20px;
     right: 20px;
-
     width: 60px;
     height: 35px;
     border-radius: 6px;
     border: none;
     cursor: pointer;
-
     font-size: 14px;
     font-weight: bold;
-
     box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
-
     transition: 0.25s;
-
     z-index: 7000;
 }
 
-/* Warna tombol mengikuti tema */
 body.theme-tk .lang-btn {
     background: gold;
     color: black;
@@ -200,7 +193,6 @@ body.theme-sd .lang-btn {
     color: black;
 }
 
-/* Hover */
 .lang-btn:hover {
     transform: scale(1.07);
 }
@@ -208,8 +200,6 @@ body.theme-sd .lang-btn {
 /* ============================================================
     NEW HOVER THEMES
 ============================================================ */
-
-/* Hover TK → Oranye terang */
 body.theme-tk-hover {
     background-color: #f9d548;
     color: #3a2a00;
@@ -224,8 +214,6 @@ body.theme-tk-hover button {
     color: #3a2a00;
 }
 
-
-/* Hover SD → Biru muda */
 body.theme-sd-hover {
     background-color: #cfe8ff;
     color: #1a1a1a;
@@ -240,6 +228,9 @@ body.theme-sd-hover button {
     color: #003366;
 }
 
+/* ============================================================
+    LOGIN MODE & OVERLAY
+============================================================ */
 body.login-mode {
     background: linear-gradient(to bottom,
         #f9d548 0%,
@@ -262,100 +253,15 @@ body.login-mode {
     visibility: visible;
 }
 
-/* KETIKA body.login-mode HILANG, overlay akan fade out */
 .overlay.fade-out {
     opacity: 0;
     visibility: hidden;
     transition: opacity .6s ease, visibility 0s linear .6s; 
 }
 
-.hidden {
-    display: none;
-}
-
-.modal-title {
-    color: black;
-}
-
-.modal-window input {
-    width: 100%;
-    max-width: 100%;
-    padding: 10px;
-    margin-top: 10px;
-    border-radius: 6px;
-    border: 1px solid #bbb;
-    font-size: 14px;
-    box-sizing: border-box;
-}
-
 /* ============================================================
-    FIX: Toggle Alignment
+    MODAL WINDOWS
 ============================================================ */
-.toggle {
-    margin-top: 10px;
-    display: flex;
-    /* FIX: Align items vertically in the center */
-    align-items: center; 
-    justify-content: flex-start;
-    gap: 8px;
-    font-size: 13px;
-    color: black;
-    line-height: 1; /* FIX: Pastikan tinggi baris seragam */
-}
-
-.toggle input[type="checkbox"] {
-    /* FIX: Reset margin-top dan padding */
-    margin-top: 0; 
-    padding: 0;
-    /* Jaga ukuran checkbox */
-    width: 16px; 
-    height: 16px;
-    /* Penting: Set vertical alignment */
-    vertical-align: middle; 
-    flex-shrink: 0; /* Cegah resize */
-}
-
-.toggle span {
-    /* FIX: Pastikan text sejajar dengan checkbox */
-    line-height: 1.2; 
-}
-
-
-.error-msg {
-    color: red;
-    font-size: 13px;
-    margin-top: 6px;
-}
-
-.small-text {
-    font-size: 13px;
-    margin-top: 15px;
-    color: black;
-}
-
-.link {
-    color: #007bff;
-    cursor: pointer;
-    text-decoration: underline;
-}
-
-/* Sembunyikan interface TK/SD saat body memiliki kelas 'login-mode' */
-body.login-mode .left-image,
-body.login-mode .content-box {
-    opacity: 0;
-    transform: translateX(40px); 
-    transition: opacity .7s ease, transform .7s ease;
-}
-
-/* Tampilkan interface TK/SD setelah login (keadaan default) */
-.left-image,
-.content-box {
-    opacity: 1; 
-    transform: translateX(0); 
-    transition: opacity .7s ease, transform .7s ease;
-}
-
-/* Posisi default semua modal → center */
 .modal-window {
     background: white;
     width: 340px;
@@ -372,13 +278,11 @@ body.login-mode .content-box {
     z-index: 6000;
 }
 
-/* Login → naik ke atas saat hilang */
 .modal-window.slide-up {
     transform: translate(-50%, -70%);
     opacity: 0;
 }
 
-/* Create → muncul dari bawah saat tampil */
 .modal-window.slide-up-reverse {
     transform: translate(-50%, -30%);
     opacity: 0;
@@ -389,13 +293,8 @@ body.login-mode .content-box {
     transform: translate(-50%, -50%);
 }
 
-#login-window {
-    z-index: 6000;
-}
-
-#create-window {
-    z-index: 6001;
-}
+#login-window { z-index: 6000; }
+#create-window { z-index: 6001; }
 
 .modal-window button {
     width: 100%;
@@ -415,17 +314,94 @@ body.login-mode .content-box {
 }
 
 /* ============================================================
+    FORM ELEMENTS & INPUTS
+============================================================ */
+.modal-title {
+    color: black;
+}
+
+.modal-window input {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 6px;
+    border: 1px solid #bbb;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.toggle {
+    margin-top: 10px;
+    display: flex;
+    align-items: center; 
+    justify-content: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: black;
+    line-height: 1;
+}
+
+.toggle input[type="checkbox"] {
+    margin-top: 0; 
+    padding: 0;
+    width: 16px; 
+    height: 16px;
+    vertical-align: middle; 
+    flex-shrink: 0;
+}
+
+.toggle span {
+    line-height: 1.2; 
+}
+
+.error-msg {
+    color: red;
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+.small-text {
+    font-size: 13px;
+    margin-top: 15px;
+    color: black;
+}
+
+.link {
+    color: #007bff;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.hidden {
+    display: none;
+}
+
+/* ============================================================
+    VISIBILITY TRANSITIONS
+============================================================ */
+body.login-mode .left-image,
+body.login-mode .content-box {
+    opacity: 0;
+    transform: translateX(40px); 
+    transition: opacity .7s ease, transform .7s ease;
+}
+
+.left-image,
+.content-box {
+    opacity: 1; 
+    transform: translateX(0); 
+    transition: opacity .7s ease, transform .7s ease;
+}
+
+/* ============================================================
     LOGOUT STATUS TEXT (NEW)
 ============================================================ */
-
 .logout-status-text {
-    /* Meniru gaya small-text tapi di luar modal */
     font-size: 14px;
     margin-top: 25px; 
-    
-    /* Gunakan properti tema agar warna mengikuti */
-    color: var(--tk-text, #4b3300); /* Default ke TK, override oleh SD di body.theme-sd */
-    font-weight: normal; /* Normal, tidak bold */
+    color: var(--tk-text, #4b3300);
+    font-weight: normal;
 }
 
 body.theme-sd .logout-status-text {
@@ -433,12 +409,7 @@ body.theme-sd .logout-status-text {
 }
 
 /* ============================================================
-    NEXT BUTTON (Dihapus dari HTML, tidak perlu gaya)
-============================================================ */
-/* (Gaya next-btn yang lama dihapus karena tidak lagi digunakan) */
-
-/* ============================================================
-    SLIDE-IN ANIMATIONS
+    ANIMATIONS
 ============================================================ */
 .slide-in-left {
     opacity: 1 !important;

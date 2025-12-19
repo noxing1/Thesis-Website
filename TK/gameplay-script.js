@@ -1,7 +1,6 @@
 import { auth, db } from "../firebase-init.js";
 import { doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-
 /* =========================================
    CORE SETUP & GAME STATE
 ========================================= */
@@ -9,7 +8,6 @@ import { doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/1
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// Game State
 let commandQueue = [];
 let isRunningCommands = false;
 let hasDied = false;
@@ -20,7 +18,7 @@ let lastTime = 0;
 const BEE_SCALE = 0.9;
 const TILE_SIZE = 16;
 const DRAW_SIZE = 24;
-const TOTAL_CHALLENGES = 10; // Jumlah total level
+const TOTAL_CHALLENGES = 10;
 
 let cam = {
   x: 0,
@@ -142,7 +140,6 @@ function getTileAt(layerName, px, py) {
 function checkColliderInDirection(dir) {
     if (!mapData || !beeAnimations.idle) return false;
     
-    // Konversi posisi pixel lebah ke posisi Grid (Tile Index)
     const gridX = Math.round(bee.x / DRAW_SIZE);
     const gridY = Math.round(bee.y / DRAW_SIZE);
     
@@ -154,7 +151,6 @@ function checkColliderInDirection(dir) {
     if (dir === "above" || dir === "up") targetGridY -= 1;
     if (dir === "down") targetGridY += 1;
 
-    // Kembalikan ke Pixel untuk fungsi getTileAt (ambil titik tengah tile target)
     const checkPx = targetGridX * DRAW_SIZE + (DRAW_SIZE / 2);
     const checkPy = targetGridY * DRAW_SIZE + (DRAW_SIZE / 2);
 
@@ -219,7 +215,6 @@ function getBestSlot(block) {
   const isDraggingLoop = block.getAttribute("data-type") === "loop";
   const isDraggingFunction = block.getAttribute("data-type") === "function";
 
-  // 1. Main Slots
   document.querySelectorAll(".workspace-area > .workspace-scroll > .slot").forEach(slot => {
     let ov = getOverlap(block, slot);
     if (ov > bestVal && ov > 0.5) {
@@ -228,7 +223,6 @@ function getBestSlot(block) {
     }
   });
 
-  // 2. Nested Slots (Loop)
   if (openLoopIndex !== -1) {
     const activeBubble = document.getElementById('global-loop-dropup');
     if (activeBubble) {
@@ -244,7 +238,6 @@ function getBestSlot(block) {
     }
   }
   
-  // 3. Nested Slots (Function)
   if (isFunctionBubbleOpen) {
       const functionBubble = document.getElementById('function-definition-bubble');
       if (functionBubble) {
@@ -259,7 +252,6 @@ function getBestSlot(block) {
       }
   }
   
-  // 4. Nested Slots (Conditional)
   if (openConditionalBlockId) {
     const isDraggingSimple = block.getAttribute("data-type") === "jalan" || block.getAttribute("data-type") === "tembak" || block.getAttribute("data-type") === "loop";
     
@@ -399,7 +391,6 @@ function updateConditionalBlockDisplay(b, blockId, isOpen) {
         const isNestedInFunctionDirectly = !isNestedInLoop && b.closest('#function-definition-bubble') !== null;
         
         if (blockId === openConditionalBlockId) {
-            // CLOSE
             openConditionalBlockId = null;
             if (isNestedInLoop) {
                  openLoopIndex = calculatedParentLoopId; 
@@ -407,7 +398,6 @@ function updateConditionalBlockDisplay(b, blockId, isOpen) {
                  isFunctionBubbleOpen = true; 
             }
         } else {
-            // OPEN
             openLoopIndex = -1; 
             isFunctionBubbleOpen = false;
             
@@ -635,7 +625,6 @@ function drop() {
               }
           }
       } else {
-          // Main Slot Drop
           const targetIndex = getSlotIndex(target);
           const existingTargetBlock = workspaceSlots[targetIndex];
           
@@ -740,9 +729,10 @@ function removeHighlight() {
 }
 
 
-// --- FUNCTION RENDERING & SYNC ---
+/* =========================================
+   FUNCTION RENDERING & SYNC
+========================================= */
 
-// REFACTORED CONDITIONAL BUBBLE RENDER
 function renderConditionalBubble(b) { 
     const blockId = b.getAttribute('data-cond-id');
     const state = conditionalNestedContent.get(blockId);
@@ -768,12 +758,9 @@ function renderConditionalBubble(b) {
     
     const activeDir = state.checkDir;
 
-    // LEFT: Button with Icon
-    // RIGHT: Slot
     condDropup.innerHTML = `
         <div class="condition-btn" id="cond-btn-${blockId}">
              <img src="../Asset/Sprites/x-${activeDir}.png" alt="${activeDir}" class="cond-icon-main" style="width: 48px; height: 48px; object-fit: contain;">
-             <!-- Secondary Dropup (Hidden by default) -->
              <div class="condition-select-dropup" id="cond-select-${blockId}" style="display: none;">
                  <div class="direction-item" data-dir="above"><img src="../Asset/Sprites/x-above.png" style="width: 30px; height: 30px; object-fit: contain;"></div>
                  <div class="direction-item" data-dir="down"><img src="../Asset/Sprites/x-down.png" style="width: 30px; height: 30px; object-fit: contain;"></div>
@@ -792,8 +779,7 @@ function renderConditionalBubble(b) {
     const blockAbsoluteTop = blockRect.top + scrollY;
     const blockAbsoluteLeft = blockRect.left + scrollX;
     
-    // Position above the block
-    const posY = blockAbsoluteTop - 120; // Adjusted for horizontal bubble height
+    const posY = blockAbsoluteTop - 120; 
     const posX = blockAbsoluteLeft + blockRect.width / 2;
     
     condDropup.style.top = `${Math.max(scrollY + 20, posY)}px`; 
@@ -802,14 +788,11 @@ function renderConditionalBubble(b) {
 
     document.body.appendChild(condDropup);
     
-    // ATTACH EVENT LISTENERS
-    
-    // 1. Toggle Direction Picker
     const mainBtn = condDropup.querySelector(`#cond-btn-${blockId}`);
     const selectDropup = condDropup.querySelector(`#cond-select-${blockId}`);
     
     if (mainBtn && selectDropup) {
-        mainBtn.onmousedown = (e) => { e.stopPropagation(); }; // Prevent drag start
+        mainBtn.onmousedown = (e) => { e.stopPropagation(); }; 
         mainBtn.onclick = (e) => {
             e.stopPropagation();
             const isVisible = selectDropup.style.display === 'flex';
@@ -817,19 +800,16 @@ function renderConditionalBubble(b) {
         };
     }
 
-    // 2. Select Direction
     condDropup.querySelectorAll('.direction-item').forEach(item => {
         item.onclick = (e) => {
             e.stopPropagation();
             const dir = item.getAttribute('data-dir');
             state.checkDir = dir;
             b.setAttribute('data-check-dir', dir); 
-            // Refresh to update icon
             renderWorkspace();
         };
     });
     
-    // 3. Nested Slot Logic
     const nestedSlot = condDropup.querySelector(".conditional-nested-slot");
     const nestedBlock = state.nestedBlock;
 
@@ -940,21 +920,19 @@ function createFunctionBlockDisplay(b) {
 function renderWorkspace(isFunctionUpdate = false) {
   let slots = getWorkspaceSlots();
 
-  // Clear Global Bubbles first
   const globalLoopDropup = document.getElementById('global-loop-dropup');
   if (globalLoopDropup) globalLoopDropup.remove();
   const globalCondDropup = document.getElementById('global-conditional-dropup');
   if (globalCondDropup) globalCondDropup.remove();
 
-  renderFunctionToolbar(); // Render function toolbar first
+  renderFunctionToolbar();
 
-  // Helper function to render loop bubble
   const renderLoopBubble = (b, loopId, loopContentArr, isFunctionContext = false) => {
       if (loopId !== openLoopIndex) return;
 
       let loopDropup = document.createElement("div");
       loopDropup.className = "loop-dropup";
-      loopDropup.id = 'global-loop-dropup'; // GLOBAL ID
+      loopDropup.id = 'global-loop-dropup'; 
       loopDropup.innerHTML = `
           <div class="loop-slot-container">
               <div class="slot nested-slot" data-index="0" ${isFunctionContext ? 'data-f-parent="true"' : ''}></div>
@@ -1008,7 +986,6 @@ function renderWorkspace(isFunctionUpdate = false) {
   };
 
 
-  // 1. Check & Render Nested Loops/Conditionals inside Function Toolbar
   if (isFunctionBubbleOpen) {
       functionContent.forEach((nestedBlock, nestedIndex) => {
           if (!nestedBlock) return;
@@ -1026,7 +1003,6 @@ function renderWorkspace(isFunctionUpdate = false) {
   }
 
 
-  // 2. Render Main Workspace
   slots.forEach((slot, i) => {
     let b = workspaceSlots[i];
     
@@ -1311,9 +1287,7 @@ function checkWinLose() {
    DATABASE WRITE LOGIC
 ========================================= */
 
-// Fungsi untuk menyimpan status level yang telah diselesaikan ke Firestore
 async function writeChallengeComplete(challengeId) {
-    // Karena ini adalah modul, auth dan db sudah tersedia dari import.
     if (!auth.currentUser) {
         console.warn("User not authenticated. Cannot write progress to Firestore.");
         return;
@@ -1324,19 +1298,16 @@ async function writeChallengeComplete(challengeId) {
     const docRef = doc(db, "artifacts", appId, "users", userId, "profile", "data");
 
     try {
-        // Menggunakan arrayUnion untuk memastikan ID level tidak duplikat
         await updateDoc(docRef, {
             completedChallenges: arrayUnion(challengeId)
         });
 
-        // Update localStorage setelah berhasil update Firestore
         let completed = JSON.parse(localStorage.getItem("completedChallenges") || "[]");
         if (!completed.includes(challengeId)) {
             completed.push(challengeId);
             localStorage.setItem("completedChallenges", JSON.stringify(completed));
         }
         
-        // Simpan jumlah XP baru (jika XP = jumlah level selesai)
         localStorage.setItem("xp", completed.length.toString());
 
         console.log(`Challenge ${challengeId} progress updated in Firestore.`);
@@ -1350,28 +1321,23 @@ function triggerWin() {
   isRunningCommands = false;
   bee.state = "idle";
   
-  // 1. Simpan progres ke database
   let completed = JSON.parse(localStorage.getItem("completedChallenges") || "[]");
   const currentLevelId = selectedMap;
-  let challengesCount = completed.length; // Hitungan dasar untuk Win Window
+  let challengesCount = completed.length; 
 
   if (!completed.includes(currentLevelId)) {
-      // PENTING: Hanya panggil fungsi asinkron. Jangan modifikasi array 'completed' di sini.
       writeChallengeComplete(currentLevelId);
-      // Tambahkan 1 untuk tampilan di Win Window secara optimistis.
       challengesCount++; 
   }
   
-  // 2. Update Win Window Display
   document.querySelectorAll("button").forEach(b => {
     if (b.id !== "btn-kembali-win") b.disabled = true;
   });
   const overlay = document.getElementById("win-overlay");
   if(overlay) overlay.style.display = "flex";
   
-  // Menampilkan total tantangan yang telah diselesaikan
   const honey = document.getElementById("honey-number");
-  if(honey) honey.innerText = challengesCount.toString(); // Gunakan challengesCount yang sudah dihitung
+  if(honey) honey.innerText = challengesCount.toString(); 
 
   const btnWin = document.getElementById("btn-kembali-win");
   if(btnWin) btnWin.onclick = () => {
@@ -1502,7 +1468,6 @@ function animateIntroBee() {
 async function loadMap(index = 0) {
     const res = await fetch(MAP_LIST[index]);
     mapData = await res.json();
-    console.log("MAP LOADED:", MAP_LIST[index]);
 }
 
 async function loadProjectile() {
@@ -1626,7 +1591,6 @@ async function loadButterflies() {
             await img.decode();
 
             if (typeof json.frameWidth !== 'number' || typeof json.frameHeight !== 'number' || typeof json.frames !== 'number') {
-                console.warn(`Butterfly ${color} JSON missing frameWidth/frameHeight/frames:`, json);
                 continue;
             }
 
@@ -1740,7 +1704,6 @@ fetch("../Asset/Sprites/normal.json")
    INIT FUNCTIONS
 ========================================= */
 
-// Fungsi baru untuk mengatur visibilitas blok di toolbar
 function setToolbarVisibility() {
     let requiredBlocks;
     try {
@@ -1764,7 +1727,6 @@ function setToolbarVisibility() {
 }
 
 
-// Panggilan awal saat semua aset dimuat
 Promise.all([
     loadMap(selectedMap),
     loadBeeAndAssets()
@@ -1823,7 +1785,6 @@ if(btnResetWorkspace) btnResetWorkspace.addEventListener("click", () => {
     renderWorkspace();
 });
 
-// auto close popup
 window.addEventListener("load", () => {
   setTimeout(() => {
     const popup = document.getElementById("intro-popup");
@@ -1919,7 +1880,6 @@ function initDropups() {
         };
     });
     
-    // DRAG FROM DROPUP (JALAN, TEMBAK, ETC.)
     document.querySelectorAll(".drop-item").forEach(item => {
       item.onmousedown = (e) => {
         e.stopPropagation();
@@ -1990,7 +1950,6 @@ if(btnRun) btnRun.onclick = () => {
 
     commandQueue = [];
 
-    // --- LOGIKA PEMBANGUNAN QUEUE DARI WORKSPACE ---
     workspaceSlots.forEach((b, i) => {
         if (!b) return;
         const type = b.getAttribute("data-type");
@@ -2005,7 +1964,6 @@ if(btnRun) btnRun.onclick = () => {
                 commandQueue.push({ type: "loop_end", id: i, iteration: r });
             }
         } else {
-            // Simple blocks, Conditional, Function
             commandQueue.push(...getBlockCommands(b));
         }
     });
@@ -2019,7 +1977,6 @@ if(btnRun) btnRun.onclick = () => {
     runNextCommand();
 };
 
-// Fungsi Rekursif untuk mendapatkan perintah dari satu block
 function getBlockCommands(b) {
     const commands = [];
     if (!b) return commands;
@@ -2089,7 +2046,6 @@ function runNextCommand() {
 
     const cmd = commandQueue.shift();
     
-    // --- Loop Control (For Breaking) ---
     if (cmd.type === "break_loop") {
         const nextLoopEndIndex = commandQueue.findIndex(c => c.type === "loop_end");
         if (nextLoopEndIndex !== -1) {
@@ -2098,7 +2054,6 @@ function runNextCommand() {
         return runNextCommand(); 
     }
     
-    // --- Conditional Check (IMPLEMENTASI LOGIKA UTAMA) ---
     if (cmd.type === "check_condition") {
         if (checkColliderInDirection(cmd.checkDir)) {
             commandQueue.unshift(...cmd.nestedCommands);
@@ -2108,7 +2063,6 @@ function runNextCommand() {
         }
     }
     
-    // --- Execution Delay ---
     setTimeout(() => {
         
         if (cmd.type === "shoot") {

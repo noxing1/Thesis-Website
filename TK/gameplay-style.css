@@ -1,6 +1,6 @@
-/* =========================================
-   GLOBAL
-========================================= */
+/* ============================================================
+   GLOBAL STYLES & VARIABLES
+============================================================ */
 :root {
   --tk-bg: #f8d24b;
   --tk-panel: #ffeb8a;
@@ -9,39 +9,33 @@
   --tk-border: rgba(0,0,0,0.25);
   --tk-shadow: rgba(0,0,0,0.22);
   --tk-slot: rgba(255,255,255,0.45);
-  /* Function Block Color */
-  --tk-function-main: #34d399; /* Green 400 */
-  --tk-function-border: #069c6f; /* Green 700 */
-  --tk-function-text: #064e3b; /* Green 900 */
-  
-  /* Conditional Block Color (NEW: Orange/Red) */
-  --tk-cond-main: #ff9933; /* Bright Orange */
-  --tk-cond-border: #cc7a00; /* Darker Orange */
+  --tk-function-main: #34d399;
+  --tk-function-border: #069c6f;
+  --tk-function-text: #064e3b;
+  --tk-cond-main: #ff9933;
+  --tk-cond-border: #cc7a00;
   --tk-cond-text: black;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: Arial;
-  background: var(--tk-bg);
-  color: var(--tk-brown);
-  box-sizing: border-box;
+  font-family: Arial, sans-serif;
   background-color: var(--tk-bg);
+  color: var(--tk-brown);
 }
 
-* {
-  box-sizing: inherit;
-}
-
-/* =========================================
-   HEADER
-========================================= */
+/* ============================================================
+   HEADER BAR
+============================================================ */
 .header-bar {
   position: fixed;
   top: 0;
   width: 100%;
   height: 60px;
-  /* Warning: tk-blue-dark tidak didefinisikan, menggunakan tk-panel untuk keamanan */
   background: var(--tk-panel);
   display: flex;
   align-items: center;
@@ -51,30 +45,37 @@ body {
   box-shadow: 0 3px 10px rgba(0,0,0,0.4);
 }
 
-/* =========================================
-   CANVAS
-========================================= */
+.title {
+  flex: 1;
+  text-align: center;
+  font-size: 22px;
+  font-weight: bold;
+  color: black;
+  pointer-events: none;
+}
+
+/* ============================================================
+   GAME CANVAS
+============================================================ */
 #game {
   position: fixed;
   top: 60px;
   left: 50%;
   transform: translateX(-50%) scale(1.415);
   transform-origin: top center;
-  
   width: auto;
   height: auto;
   max-width: 90vw;
   max-height: calc(100vh - 250px);
-
   image-rendering: pixelated;
   border: 2px solid #fff2;
   border-radius: 10px;
   display: block;
 }
 
-/* =========================================
-   BOTTOM PANEL
-========================================= */
+/* ============================================================
+   BOTTOM PANEL & TOOLBAR
+============================================================ */
 .bottom-panel {
   position: fixed;
   bottom: 0;
@@ -89,18 +90,6 @@ body {
   border-top: 2px solid var(--tk-border);
   box-shadow: 0 -4px 10px var(--tk-shadow);
   overflow: visible !important; 
-}
-
-/* =========================================
-   TOOLBAR AREA 50%
-========================================= */
-.toolbar-buttons {
-  display: flex;
-  flex-direction: row;
-  gap: 12px;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
 }
 
 .toolbar-area {
@@ -121,6 +110,15 @@ body {
   padding-left: 5px;
 }
 
+.toolbar-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
 .toolbar-btn {
   width: 70px;
   height: 70px;
@@ -129,25 +127,18 @@ body {
   color: var(--tk-brown);
   box-shadow: 0 3px 6px var(--tk-shadow);
   border: 1px solid var(--tk-border);
-
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-
   font-weight: bold;
   cursor: pointer;
   position: relative;
 }
 
-.block-label {
-  font-size: 40px;
-  margin-top: -10px;
-}
-
-/* =========================================
-   DROPUP (Toolbar Flyout)
-========================================= */
+/* ============================================================
+   TOOLBAR FLYOUT (DROPUP)
+============================================================ */
 .dropup {
   position: absolute;
   bottom: 80px;
@@ -177,9 +168,9 @@ body {
   background: #ffe58c;
 }
 
-/* =========================================
-   WORKSPACE CONTAINER (BARU)
-========================================= */
+/* ============================================================
+   WORKSPACE AREA
+============================================================ */
 .workspace-area-wrapper {
   position: fixed;
   bottom: 0;
@@ -195,41 +186,23 @@ body {
   box-shadow: 0 -4px 10px var(--tk-shadow);
 }
 
-/* =========================================
-   WORKSPACE 50%
-========================================= */
 .workspace-area {
   flex: 1;
   min-width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  
   overflow-y: visible; 
   overflow-x: auto;
-  
   position: relative;
   z-index: 10000; 
   padding-right: 15px;
 }
 
-.btn-reset-workspace {
-  position: fixed;
-  right: 10px;
-  bottom: 145px;
-  background: #ffeab2;
-  border: 2px solid var(--tk-brown);
+.workspace-area h3 {
   color: var(--tk-brown);
-  font-size: 14px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 3px 5px rgba(0,0,0,0.25);
-  z-index: 10001;
-}
-
-.btn-reset-workspace:hover {
-  background: #ffdfa0;
+  margin-top: -5px;
+  margin-bottom: 10px;
 }
 
 .workspace-scroll {
@@ -240,13 +213,9 @@ body {
   padding-top: 10px;
 }
 
-.workspace-area h3 {
-  color: var(--tk-brown);
-  margin-top: -5px;
-  margin-bottom: 10px;
-}
-
-/* Slot kotak */
+/* ============================================================
+   SLOTS & BLOCKS
+============================================================ */
 .slot {
   width: 80px;
   height: 80px;
@@ -268,16 +237,12 @@ body {
   box-shadow: inset 0 0 10px #ffd342;
 }
 
-/* =========================================
-   BLOCK (KOTAK)
-========================================= */
 .block {
   background: var(--tk-panel-dark);
   border: 2px solid var(--tk-brown);
   border-radius: 10px;
   box-shadow: 0 3px 5px var(--tk-shadow);
   color: var(--tk-brown);
-
   width: 78px;
   height: 78px;
   flex: 0 0 auto;
@@ -289,7 +254,14 @@ body {
   font-size: 38px;
 }
 
-/* --- FUNCTION BLOCK CUSTOM --- */
+.block-label {
+  font-size: 40px;
+  margin-top: -10px;
+}
+
+/* ============================================================
+   FUNCTION BLOCK CUSTOM
+============================================================ */
 .block[data-type="function"] {
   background-color: var(--tk-function-main);
   color: var(--tk-function-text);
@@ -391,9 +363,10 @@ body {
   box-shadow: 0 2px 4px rgba(0,0,0,0.3);
   z-index: 20;
 }
-/* --- END FUNCTION BLOCK CUSTOM --- */
 
-/* --- LOOP BLOCK CUSTOM --- */
+/* ============================================================
+   LOOP BLOCK CUSTOM
+============================================================ */
 .block[data-type="loop"] {
   background-color: #5d5dff;
   color: white;
@@ -488,11 +461,6 @@ body {
   background-color: #ffe999; 
 }
 
-.loop-dropup .slot .block {
-  position: relative; 
-  z-index: 5011; 
-}
-
 .loop-toggle-btn {
   position: absolute;
   top: -5px;
@@ -511,15 +479,13 @@ body {
   box-shadow: 0 2px 4px rgba(0,0,0,0.3);
   z-index: 20; 
 }
-/* --- END LOOP BLOCK CUSTOM --- */
 
-/* =========================================
-   NEW: CONDITIONAL BLOCK (IF-ELSE)
-========================================= */
-
+/* ============================================================
+   CONDITIONAL BLOCK (IF-ELSE)
+============================================================ */
 .block[data-type="if-else"] {
-  background-color: var(--tk-cond-main); /* Orange */
-  color: var(--tk-cond-text); /* White Text */
+  background-color: var(--tk-cond-main);
+  color: var(--tk-cond-text);
   border: 2px solid var(--tk-cond-border);
   font-size: 20px;
   font-weight: bold;
@@ -527,161 +493,155 @@ body {
 }
 
 .if-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
 }
-
-.if-text {
-    display: none;
-}
-
 
 .conditional-dropup {
-    position: absolute;
-    top: -100px; 
-    left: 50%;
-    transform: translateX(-50%);
-    
-    background-color: var(--tk-panel-dark); 
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    z-index: 10002;
-    padding: 10px;
-    display: none; 
-    flex-direction: row; /* Horizontal: Button + Slot */
-    align-items: center;
-    gap: 10px;
-    
-    border: 3px solid var(--tk-cond-border); 
-    width: 200px; /* Lebar hanya untuk menampung 2 item 80px + gap + padding */
-    height: 100px; /* Tinggi disesuaikan */
-    box-sizing: border-box;
-    justify-content: center;
+  position: absolute;
+  top: -100px; 
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--tk-panel-dark); 
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 10002;
+  padding: 10px;
+  display: none; 
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  border: 3px solid var(--tk-cond-border); 
+  width: 200px;
+  height: 100px;
+  box-sizing: border-box;
+  justify-content: center;
 }
 
 .conditional-dropup::after {
-    content: '';
-    position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-top: 10px solid var(--tk-panel-dark);
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid var(--tk-panel-dark);
 }
 
-/* Tombol untuk membuka Direction Picker */
 .condition-btn {
-    width: 80px;
-    height: 80px;
-    background: var(--tk-cond-main); /* Gunakan warna block utama */
-    border: 2px solid var(--tk-cond-border);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    position: relative; /* Penting untuk Secondary Dropup */
-}
-
-.conditional-toggle-btn {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background-color: #ff9933; 
-    color: black;
-    font-size: 14px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 20;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  width: 80px;
+  height: 80px;
+  background: var(--tk-cond-main);
+  border: 2px solid var(--tk-cond-border);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  position: relative;
 }
 
 .condition-btn:hover {
-    background: #ff8c1a; /* Sedikit lebih gelap saat hover */
+  background: #ff8c1a;
 }
 
 .condition-btn img {
-    /* Ukuran disesuaikan agar terlihat jelas */
-    width: 48px; 
-    height: 48px;
-    image-rendering: pixelated;
+  width: 48px; 
+  height: 48px;
+  image-rendering: pixelated;
 }
 
-/* Secondary Dropup (Direction Picker) - Horizontal Dropup */
 .condition-select-dropup {
-    position: absolute;
-    top: -10px; /* Di atas tombol utama */
-    left: 100%; /* Di sebelah kanan tombol utama */
-    transform: translateY(-50%);
-    
-    width: auto; /* Lebar dinamis */
-    background: var(--tk-panel);
-    border: 2px solid var(--tk-cond-border);
-    border-radius: 8px;
-    padding: 8px;
-    display: none;
-    flex-direction: row; /* HORIZONTAL */
-    gap: 5px;
-    z-index: 10003;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  position: absolute;
+  top: -10px;
+  left: 100%;
+  transform: translateY(-50%);
+  width: auto;
+  background: var(--tk-panel);
+  border: 2px solid var(--tk-cond-border);
+  border-radius: 8px;
+  padding: 8px;
+  display: none;
+  flex-direction: row;
+  gap: 5px;
+  z-index: 10003;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
 .direction-item {
-    padding: 5px;
-    background: #ffeab2;
-    border-radius: 5px;
-    text-align: center;
-    cursor: pointer;
-    width: 45px; /* Lebar Tetap */
-    height: 45px; /* Tinggi Tetap */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  padding: 5px;
+  background: #ffeab2;
+  border-radius: 5px;
+  text-align: center;
+  cursor: pointer;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .direction-item:hover {
-    background: #ffdfa0;
+  background: #ffdfa0;
 }
 
 .direction-item img {
-    width: 30px;
-    height: 30px;
-    vertical-align: middle;
-    image-rendering: pixelated;
+  width: 30px;
+  height: 30px;
+  vertical-align: middle;
+  image-rendering: pixelated;
 }
 
-/* Slot di dalam Conditional Bubble - Slot Block Sebelah Kanan */
 .conditional-dropup .nested-slot {
-    width: 80px; 
-    height: 80px;
-    border: 2px dashed var(--tk-cond-border); 
-    background: var(--tk-slot);
-    flex-shrink: 0;
+  width: 80px; 
+  height: 80px;
+  border: 2px dashed var(--tk-cond-border); 
+  background: var(--tk-slot);
+  flex-shrink: 0;
 }
 
+.conditional-toggle-btn {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #ff9933; 
+  color: black;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 20;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
 
-/* =========================================
-   UTILITY & OVERLAYS
-========================================= */
-.drag-shadow {
-  background: var(--tk-panel-dark);
+/* ============================================================
+   CONTROL BUTTONS & UTILITIES
+============================================================ */
+.btn-reset-workspace {
+  position: fixed;
+  right: 10px;
+  bottom: 145px;
+  background: #ffeab2;
   border: 2px solid var(--tk-brown);
-  font-size: 38px;
-  line-height: 38px;
-  z-index: 10003; 
+  color: var(--tk-brown);
+  font-size: 14px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 3px 5px rgba(0,0,0,0.25);
+  z-index: 10001;
 }
 
 .btn-reset-manual {
@@ -699,10 +659,49 @@ body {
   z-index: 1200;
 }
 
-.btn-reset-manual:hover {
-  background: #ffdfa0;
+.drag-shadow {
+  background: var(--tk-panel-dark);
+  border: 2px solid var(--tk-brown);
+  font-size: 38px;
+  line-height: 38px;
+  z-index: 10003; 
 }
 
+.right-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-btn {
+  width: 102px;
+  height: 40px;
+  border-radius: 10px;
+  background: yellow;
+  border: 2px solid var(--tk-brown);
+  color: var(--tk-brown);
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 3px 5px rgba(0,0,0,0.25);
+}
+
+.lang-btn {
+  width: 60px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  background: gold;
+  color: black;
+  transition: 0.25s ease;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
+}
+
+/* ============================================================
+   WIN & INTRO OVERLAYS
+============================================================ */
 .win-overlay {
   position: fixed;
   inset: 0;
@@ -740,11 +739,7 @@ body {
   cursor: pointer;
   box-shadow: 0 3px 5px rgba(0,0,0,0.3);
 }
-.btn-kembali:hover {
-  background: #ffee4e;
-}
 
-/* INTRO POPUP */
 #intro-popup {
   position: fixed;
   inset: 0;
@@ -791,13 +786,11 @@ body {
   justify-content: center;
   gap: 6px;
   margin: 15px 0 25px 0;
-  opacity: 1;
 }
 
 .honey-equal {
   font-size: 38px;
   font-weight: bold;
-  color: var(--tk-brown);
 }
 
 .honey-icon {
@@ -808,54 +801,5 @@ body {
 #honey-number {
   font-size: 42px;
   font-weight: bold;
-  color: var(--tk-brown);
   text-shadow: 2px 2px #fff4;
-  opacity: 1;
-  transition: opacity 0.6s ease;
-}
-
-.lang-btn {
-  width: 60px;
-  height: 32px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-  background: gold;
-  color: black;
-  transition: 0.25s ease;
-  box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
-  padding: 0;
-}
-
-.lang-btn:hover {
-  background: #ffdd66;
-}
-
-.title {
-  flex: 1;
-  text-align: center;
-  font-size: 22px;
-  font-weight: bold;
-  color: black;
-  pointer-events: none;
-}
-
-.right-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.nav-btn {
-  width: 102px;
-  height: 40px;
-  border-radius: 10px;
-  background: yellow;
-  border: 2px solid var(--tk-brown);
-  color: var(--tk-brown);
-  font-size: 18px;
-  cursor: pointer;
-  box-shadow: 0 3px 5px rgba(0,0,0,0.25);
 }

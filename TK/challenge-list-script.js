@@ -5,15 +5,10 @@ const CHALLENGE_TEXT = {
         { title: "Blokade Kupu-kupu", tags: "[mudah] [musuh]", blocks: { loop: false, conditional: false } },
         { title: "Jalur Zig-Zag", tags: "[sedang] [musuh]", blocks: { loop: false, conditional: false } },
         { title: "Blokade Balik", tags: "[sedang] [musuh]", blocks: { loop: false, conditional: false } },
-        
         { title: "Gerbang Ganda", tags: "[sedang] [musuh] [loop]", blocks: { loop: true, conditional: false } },
-        
         { title: "Labirin Mini", tags: "[sulit] [musuh] [conditional]", blocks: { loop: false, conditional: true } },
-        
         { title: "Simpang Tiga", tags: "[sulit] [musuh]", blocks: { loop: false, conditional: false } },
-        
         { title: "Pola Zig-Zag", tags: "[sulit] [musuh] [loop]", blocks: { loop: true, conditional: false } },
-        
         { title: "Labirin", tags: "[sulit] [loop] [conditional]", blocks: { loop: true, conditional: true } }
     ],
 
@@ -23,23 +18,17 @@ const CHALLENGE_TEXT = {
         { title: "Butterfly Blockade", tags: "[easy] [enemy]", blocks: { loop: false, conditional: false } },
         { title: "Zig-Zag Path", tags: "[medium] [enemy]", blocks: { loop: false, conditional: false } },
         { title: "Reverse Blockade", tags: "[medium] [enemy]", blocks: { loop: false, conditional: false } },
-        
         { title: "Double Gate", tags: "[medium] [enemy] [loop]", blocks: { loop: true, conditional: false } },
-        
         { title: "Mini Maze", tags: "[hard] [enemy] [conditional]", blocks: { loop: false, conditional: true } },
-        
         { title: "Three-Way Intersection", tags: "[hard] [enemy]", blocks: { loop: false, conditional: false } },
-        
         { title: "Zig-Zag Pattern", tags: "[hard] [enemy] [loop]", blocks: { loop: true, conditional: false } },
-        
         { title: "Labirynth", tags: "[hard] [loop] [conditional]", blocks: { loop: true, conditional: true } }
     ]
 };
 
 /* ============================================================
-    INIT: User Data & Theme
+   INIT: User Data & Theme
 ============================================================ */
-
 const userTheme = localStorage.getItem("theme") || "tk";
 document.body.classList.remove("theme-tk", "theme-sd");
 document.body.classList.add(`theme-${userTheme}`);
@@ -54,18 +43,15 @@ try {
     console.error("Error parsing completed challenges:", e);
 }
 
-// Total Challenge yang tersedia adalah 10 (index 0 hingga 9)
 const TOTAL_CHALLENGES = 10;
 const completedCount = completedChallenges.length;
 const progressPercentage = Math.min(100, (completedCount / TOTAL_CHALLENGES) * 100);
 
 /* ============================================================
-    CLOCK (DIGITAL CLOCK WITH ANIMATION)
+   CLOCK (DIGITAL CLOCK WITH ANIMATION)
 ============================================================ */
-
 function updateClock() {
     const now = new Date();
-
     const hour = now.getHours().toString().padStart(2, "0");
     const minute = now.getMinutes().toString().padStart(2, "0");
 
@@ -92,22 +78,18 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-
 /* ============================================================
-    LANGUAGE TOGGLE (IND ⇄ ENG)
+   LANGUAGE TOGGLE (IND ⇄ ENG)
 ============================================================ */
-
 let currentLanguage = localStorage.getItem("lang") || "id";
 const langBtn = document.getElementById("lang-toggle-btn");
 
-// initial load
 applyLanguage(currentLanguage);
 updateLangButton();
 
 langBtn.onclick = () => {
     currentLanguage = (currentLanguage === "id") ? "en" : "id";
     localStorage.setItem("lang", currentLanguage);
-
     applyLanguage(currentLanguage);
     updateLangButton();
 };
@@ -129,14 +111,11 @@ function text(el, value) {
 }
 
 /* ============================================================
-    APPLY LANGUAGE STRINGS AND USER DATA
+   APPLY LANGUAGE STRINGS AND USER DATA
 ============================================================ */
-
 function applyLanguage(lang) {
-
     const L = {
         en: {
-            // CHALLENGE LIST PAGE
             progress_title: "Your Progress!",
             challenge_subtitle: "Choose a coding challenge that matches your skill level.",
             challenge_title: "Challenges",
@@ -149,9 +128,7 @@ function applyLanguage(lang) {
             xp_label: "Completed:",
             btn_best: "Start Best Challenge",
         },
-
         id: {
-            // CHALLENGE LIST PAGE
             progress_title: "Progresmu!",
             challenge_subtitle: "Pilih tantangan coding yang sesuai tingkat kemampuanmu.",
             challenge_title: "Tantangan",
@@ -168,30 +145,20 @@ function applyLanguage(lang) {
 
     const T = L[lang];
 
-    /* -------------------------
-        USER INFO DISPLAY
-    ------------------------- */
     const storedUsername = localStorage.getItem("username") || "Pengguna";
-    
     document.getElementById("user-name-display").textContent = storedUsername;
     document.getElementById("user-xp-display").textContent = completedCount;
     document.getElementById("user-xp-max").textContent = TOTAL_CHALLENGES;
     document.getElementById("exp-fill").style.width = `${progressPercentage}%`;
 
-
-    /* -------------------------
-        CHALLENGE LIST PAGE TEXTS
-    ------------------------- */
     text(document.getElementById("progress-title"), T.progress_title);
     text(document.getElementById("challenge-subtitle"), T.challenge_subtitle);
     text(document.getElementById("challenge-title"), T.challenge_title);
-
     text(document.getElementById("filter-text"), T.filter_text);
     text(document.getElementById("filter-all"), T.filter_all);
     text(document.getElementById("filter-easy"), T.filter_easy);
     text(document.getElementById("filter-medium"), T.filter_medium);
     text(document.getElementById("filter-hard"), T.filter_hard);
-
     text(document.getElementById("user-label"), T.user_label);
     text(document.getElementById("xp-label"), T.xp_label);
     text(document.getElementById("btn-best-text"), T.btn_best);
@@ -206,7 +173,6 @@ function applyLanguage(lang) {
             tagEl.textContent = CHALLENGE_TEXT[lang][cid].tags;
         }
         
-        // Logika penandaan level selesai
         const badge = box.querySelector(".completion-badge");
         if (badge) {
              if (completedChallenges.includes(cid)) {
@@ -219,28 +185,24 @@ function applyLanguage(lang) {
 }
 
 /* ============================================================
-    FILTER CHALLENGES
+   FILTER CHALLENGES
 ============================================================ */
-
 const radioButtons = document.querySelectorAll('input[name="difficulty"]');
 const challengeBoxes = document.querySelectorAll('.challenge-box');
 
 radioButtons.forEach(radio => {
     radio.addEventListener('change', () => {
         const v = radio.value;
-
         challengeBoxes.forEach(box => {
             if (v === 'all') box.style.display = "block";
             else box.style.display = box.classList.contains(v) ? "block" : "none";
         });
-
     });
 });
 
 /* ============================================================
-    BUTTON ACTIONS (GO TO NEXT PAGE)
+   BUTTON ACTIONS (GO TO NEXT PAGE)
 ============================================================ */
-
 document.getElementById("btn-best").onclick = () => {
     window.location.href = "gameplay.html";
 };
